@@ -1,0 +1,1 @@
+export { SupabaseStatus as default } from "./Settings";

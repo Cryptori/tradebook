@@ -1,0 +1,321 @@
+/* ============================================
+   TRADEBOOK — Global Reset & Base Styles
+   ============================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ── CSS Variables — Dark (default) ─────────── */
+:root {
+  --bg:             #090e1a;
+  --bg-card:        #0d1526;
+  --bg-card2:       #111827;
+  --bg-hover:       #111827;
+  --bg-input:       #0d1526;
+  --bg-subtle:      rgba(255,255,255,0.03);
+  --border:         #1e3a5f;
+  --border-subtle:  rgba(30,58,95,0.3);
+  --text:           #e2e8f0;
+  --text-muted:     #94a3b8;
+  --text-dim:       #64748b;
+  --accent:         #00d4aa;
+  --scrollbar-bg:   #0d1526;
+  --scrollbar-thumb:#1e3a5f;
+}
+
+/* ── CSS Variables — Light ───────────────────── */
+[data-theme="light"] {
+  --bg:             #f0f4f8;
+  --bg-card:        #ffffff;
+  --bg-card2:       #f8fafc;
+  --bg-hover:       #f1f5f9;
+  --bg-input:       #ffffff;
+  --bg-subtle:      rgba(0,0,0,0.04);
+  --border:         #cbd5e1;
+  --border-subtle:  rgba(203,213,225,0.6);
+  --text:           #0f172a;
+  --text-muted:     #475569;
+  --text-dim:       #94a3b8;
+  --accent:         #0d9488;
+  --scrollbar-bg:   #e2e8f0;
+  --scrollbar-thumb:#94a3b8;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "DM Mono", "Courier New", monospace;
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* ── Scrollbar ──────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-bg); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Selection ──────────────────────────────── */
+::selection { background: #00d4aa30; color: var(--text); }
+
+/* ── Form Elements Reset ────────────────────── */
+button, input, select, textarea {
+  font-family: inherit;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ── Base Input / Select / Textarea ─────────── */
+input, select, textarea {
+  width: 100%;
+  padding: 9px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent) !important;
+}
+select option {
+  background: var(--bg-card);
+  color: var(--text);
+}
+label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 5px;
+}
+textarea { resize: vertical; }
+
+/* ── Buttons ────────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #00d4aa, #00b4d8);
+  border: none;
+  color: #090e1a;
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: opacity 0.2s, transform 0.1s;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:active { transform: scale(0.98); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-family: "DM Mono", monospace;
+  font-size: 13px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-family: "DM Mono", monospace;
+  font-size: 12px;
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
+
+/* ── Cards ──────────────────────────────────── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+/* ── Trade Form Modal ───────────────────────── */
+.form-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+.form-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px;
+  width: 100%;
+  margin: auto;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+/* ── Stat Cards ─────────────────────────────── */
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-family: "DM Mono", monospace;
+}
+.stat-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+
+/* ── Tables ─────────────────────────────────── */
+.trade-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  color: var(--text);
+}
+.trade-table th {
+  text-align: left;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  background: var(--bg-card);
+}
+.trade-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+  color: var(--text-muted);
+}
+.trade-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+/* ── Badges ─────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+.badge-buy    { background: rgba(0,212,170,0.12);  color: #00d4aa; }
+.badge-sell   { background: rgba(245,158,11,0.12); color: #f59e0b; }
+.badge-win    { background: rgba(0,212,170,0.12);  color: #00d4aa; }
+.badge-loss   { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.badge-market { background: var(--bg-subtle); color: var(--text-dim); border: 1px solid var(--border-subtle); }
+
+/* ── Page Wrapper ───────────────────────────── */
+.page-wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* ── Recharts override — tooltip & legend ───── */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--bg-card) !important;
+  border-color: var(--border) !important;
+  color: var(--text) !important;
+}
+.recharts-legend-item-text {
+  color: var(--text-muted) !important;
+}
+.recharts-cartesian-axis-tick-value {
+  fill: var(--text-dim) !important;
+}
+
+/* ── Responsive ─────────────────────────────── */
+@media (max-width: 768px) {
+  .page-wrapper { padding: 12px; }
+  .form-card { padding: 18px; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .trade-table th:nth-child(n+6),
+  .trade-table td:nth-child(n+6) { display: none; }
+}
+@media (max-width: 480px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+/* ── Mobile overrides ───────────────────────────────────────── */
+@media (max-width: 639px) {
+  .page-wrapper { padding: 12px; }
+  .form-card    { padding: 16px; }
+  .form-grid    { grid-template-columns: 1fr; }
+  .stat-card    { padding: 12px 14px; }
+
+  /* Stat value smaller on mobile */
+  .stat-value { font-size: 18px; }
+
+  /* Hide less important table columns */
+  .trade-table th:nth-child(n+6),
+  .trade-table td:nth-child(n+6) { display: none; }
+
+  /* Full-width buttons on mobile */
+  .btn-primary, .btn-ghost { width: 100%; justify-content: center; }
+
+  /* Header tabs — scroll horizontally */
+  header nav { justify-content: flex-start !important; }
+}
+
+@media (max-width: 767px) {
+  /* Recharts responsive text */
+  .recharts-cartesian-axis-tick-value { font-size: 8px !important; }
+}

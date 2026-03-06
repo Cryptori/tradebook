@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Trading journal untuk trader serius. Catat, analisis, dan tingkatkan performa trading kamu." />
+    <meta name="theme-color" content="#090e1a" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tradebook — Journal & Portfolio</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#00d4aa" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Tradebook" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+
+    <!-- SEO -->
+    <meta name="description" content="Trading journal and portfolio tracker for Forex, Crypto, and Stocks" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          const isDev = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+          if (isDev) {
+            // Unregister all service workers in development to avoid HMR interference
+            navigator.serviceWorker.getRegistrations().then(regs => {
+              regs.forEach(reg => reg.unregister());
+            });
+          } else {
+            // Register SW only in production
+            navigator.serviceWorker.register("/sw.js").catch(() => {});
+          }
+        });
+      }
+    </script>
+  </body>
+</html>
