@@ -12,6 +12,7 @@ import { useDailyJournal }     from "./hooks/useDailyJournal";
 import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
 import AIFloatingChat from "./components/AIFloatingChat";
 
+
 // ── Always-loaded (above the fold / critical) ─────────────────────
 import NotificationsContainer from "./components/Notifications";
 import Header                 from "./components/Header";
@@ -41,6 +42,7 @@ const DailyJournal      = lazy(() => import("./components/pages/DailyJournal"));
 const TradeReplay       = lazy(() => import("./components/pages/TradeReplay"));
 const SharePerformance  = lazy(() => import("./components/pages/SharePerformance"));
 const AIAdvisor         = lazy(() => import("./components/pages/AIAdvisor"));
+
 
 const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "risk", "settings"];
 
@@ -301,3 +303,4 @@ export default function TradingJournal() {
     </div>
   );
 }
+
