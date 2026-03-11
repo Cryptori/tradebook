@@ -9,6 +9,8 @@ import { useSupabase }      from "./hooks/useSupabase";
 import { useNotifications } from "./hooks/useNotifications";
 import { usePlaybook }        from "./hooks/usePlaybook";
 import { useDailyJournal }     from "./hooks/useDailyJournal";
+import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
+import AIFloatingChat from "./components/AiFloatingChat";
 
 // ── Always-loaded (above the fold / critical) ─────────────────────
 import NotificationsContainer from "./components/Notifications";
@@ -38,8 +40,9 @@ const Playbook          = lazy(() => import("./components/pages/Playbook"));
 const DailyJournal      = lazy(() => import("./components/pages/DailyJournal"));
 const TradeReplay       = lazy(() => import("./components/pages/TradeReplay"));
 const SharePerformance  = lazy(() => import("./components/pages/SharePerformance"));
+const AIAdvisor         = lazy(() => import("./components/pages/AIAdvisor"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -103,9 +106,18 @@ export default function TradingJournal() {
   const { toasts, dismissToast } = useNotifications({ stats, settings, currencyMeta });
   const playbookHook    = usePlaybook();
   const dailyJournalHook = useDailyJournal();
+  const aiHook           = useAIAdvisor();
 
   // ── Page title
   usePageTitle(activeTab);
+
+  // Build AI context — update saat data berubah
+  const aiContext = buildAIContext({
+    trades, stats, settings, currencyMeta,
+    journal: dailyJournalHook.entries,
+    playbook: playbookHook.setups,
+  });
+  aiHook.setContext(aiContext);
 
   // ── Onboarding
   const onboarding = useOnboarding();
@@ -245,6 +257,10 @@ export default function TradingJournal() {
                 stats={stats} trades={trades} settings={settings}
                 currencyMeta={currencyMeta} theme={theme}
               />
+            )}
+
+            {activeTab === "ai" && (
+              <AIAdvisor aiHook={aiHook} theme={theme} />
             )}
 
             {activeTab === "risk" && (
