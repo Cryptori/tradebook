@@ -10,7 +10,7 @@ import { useNotifications } from "./hooks/useNotifications";
 import { usePlaybook }        from "./hooks/usePlaybook";
 import { useDailyJournal }     from "./hooks/useDailyJournal";
 import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
-import AIFloatingChat from "./components/AIFloatingChat";
+import AIFloatingChat from "./components/AiFloatingChat";
 
 // ── Always-loaded (above the fold / critical) ─────────────────────
 import NotificationsContainer from "./components/Notifications";
