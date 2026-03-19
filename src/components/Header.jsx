@@ -13,8 +13,9 @@ const TAB_LABELS = {
   replay:    "Replay",
   share:     "Share",
   ai:        "AI",
-  portfolio: "Porto",
-  risk:      "Risk",
+  portfolio:      "Porto",
+  "calendar-eco": "Kalender",
+  risk:           "Risk",
   settings:  "Settings",
 };
 

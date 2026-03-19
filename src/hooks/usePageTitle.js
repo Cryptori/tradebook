@@ -12,8 +12,9 @@ const TAB_TITLES = {
   replay:    "Trade Replay",
   share:     "Share",
   ai:        "AI Advisor",
-  portfolio: "Portfolio",
-  risk:      "Risk Calculator",
+  portfolio:      "Portfolio",
+  "calendar-eco": "Economic Calendar",
+  risk:           "Risk Calculator",
   settings:  "Settings",
 };
 

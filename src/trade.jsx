@@ -10,7 +10,8 @@ import { useNotifications } from "./hooks/useNotifications";
 import { usePlaybook }        from "./hooks/usePlaybook";
 import { useDailyJournal }     from "./hooks/useDailyJournal";
 import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
-import { usePortfolio }        from "./hooks/usePortfolio";
+import { usePortfolio }            from "./hooks/usePortfolio";
+import { useEconomicCalendar }      from "./hooks/useEconomicCalendar";
 import AIFloatingChat from "./components/AIFloatingChat";
 
 // ── Always-loaded (above the fold / critical) ─────────────────────
@@ -43,8 +44,9 @@ const TradeReplay       = lazy(() => import("./components/pages/TradeReplay"));
 const SharePerformance  = lazy(() => import("./components/pages/SharePerformance"));
 const AIAdvisor         = lazy(() => import("./components/pages/AIAdvisor"));
 const Portfolio         = lazy(() => import("./components/pages/Portfolio"));
+const EconomicCalendar  = lazy(() => import("./components/pages/EconomicCalendar"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -109,6 +111,7 @@ export default function TradingJournal() {
   const dailyJournalHook = useDailyJournal();
   const aiHook           = useAIAdvisor();
   const portfolioHook    = usePortfolio(trades);
+  const calendarHook     = useEconomicCalendar(trades);
   const { toasts, dismissToast, pushEnabled, enablePush } = useNotifications({
     stats, settings, currencyMeta,
     journalEntries: dailyJournalHook.entries,
@@ -277,6 +280,10 @@ export default function TradingJournal() {
                 currencyMeta={currencyMeta}
                 theme={theme}
               />
+            )}
+
+            {activeTab === "calendar-eco" && (
+              <EconomicCalendar calendarHook={calendarHook} theme={theme} />
             )}
 
             {activeTab === "risk" && (
