@@ -95,7 +95,7 @@ export function useNotifications({ stats, settings, currencyMeta, journalEntries
       var s     = getRemState();
 
       var jKey = "j_" + today + "_" + (h >= 20 ? "pm" : "am");
-      if (!s[jKey] && (h === 8 || h === 20) && !journaledToday(journalEntries)) {
+      if (!s[jKey] && (h === 8 || h === 20) && !journaledToday(journalEntries || [])) {
         add({ type: "info", key: jKey, title: "Isi Jurnal Harian", message: h === 8 ? "Pagi! Tulis pre-market analysis hari ini." : "Malam! Sudah isi post-market journal belum?" });
         setRemState(jKey);
       }

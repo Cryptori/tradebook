@@ -63,21 +63,21 @@ export function usePortfolio(trades) {
   // Posisi open dari trade journal (exit === 0 atau kosong)
   const journalOpenPositions = useMemo(() => {
     return (trades || [])
-      .filter(t => !t.exit || parseFloat(t.exit) === 0)
-      .map(t => ({
-        id:          "journal_" + t.id,
-        pair:        t.pair,
-        market:      t.market,
-        side:        t.side,
-        entry:       String(t.entry),
+      .filter(tr => !tr.exit || parseFloat(tr.exit) === 0)
+      .map(tr => ({
+        id:          "journal_" + tr.id,
+        pair:        tr.pair,
+        market:      tr.market,
+        side:        tr.side,
+        entry:       String(tr.entry),
         currentPrice:"",
-        sl:          String(t.stopLoss || ""),
-        tp:          String(t.takeProfit || ""),
-        size:        String(t.size || ""),
-        openDate:    t.date,
-        notes:       t.notes || "",
+        sl:          String(tr.stopLoss || ""),
+        tp:          String(tr.takeProfit || ""),
+        size:        String(tr.size || ""),
+        openDate:    tr.date,
+        notes:       tr.notes || "",
         fromJournal: true,
-        journalId:   t.id,
+        journalId:   tr.id,
       }));
   }, [trades]);
 

@@ -334,17 +334,19 @@ export default function TradingPlan({ planHook, theme }) {
               />
             </div>
           ) : (
-            <div className="stat-card" style={{ textAlign: "center", padding: "60px 20px" }}>
-              <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
-              <div style={{ fontSize: 14, color: t.text, marginBottom: 6 }}>
-                {isCurrentWeek ? "Belum ada plan minggu ini" : "Tidak ada plan untuk minggu ini"}
+            <div className="stat-card">
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "56px 24px", textAlign: "center" }}>
+                <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg, rgba(0,200,150,0.08), rgba(0,200,150,0.04))", border: "1px solid rgba(0,200,150,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 20 }}>📋</div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 8 }}>
+                  {isCurrentWeek ? "Belum ada plan minggu ini" : "Tidak ada plan untuk minggu ini"}
+                </div>
+                <div style={{ fontSize: 12, color: t.textDim, maxWidth: 280, lineHeight: 1.8, marginBottom: 20 }}>
+                  {isCurrentWeek ? "Rencanakan minggu trading kamu — target, fokus pair, dan rules" : "Tidak ada data untuk minggu ini"}
+                </div>
+                {isCurrentWeek && (
+                  <button onClick={() => openAdd(activeWeek)} className="btn-primary" style={{ fontSize: 12 }}>+ Buat Trading Plan</button>
+                )}
               </div>
-              <div style={{ fontSize: 12, color: t.textDim, marginBottom: 20 }}>
-                {isCurrentWeek ? "Buat trading plan sebelum mulai trading minggu ini" : "Tidak ada data untuk minggu ini"}
-              </div>
-              {isCurrentWeek && (
-                <button onClick={() => openAdd(activeWeek)} className="btn-primary">+ Buat Trading Plan</button>
-              )}
             </div>
           )}
         </div>

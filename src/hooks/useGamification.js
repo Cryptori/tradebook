@@ -69,7 +69,7 @@ const BADGES = [
 
 // ── Calculate streaks ─────────────────────────────────────────────
 function calcJournalStreak(journalEntries) {
-  if (!journalEntries || journalEntries.length === 0) return 0;
+  if (!journalEntries || !journalEntries.length) return 0;
   const dates = new Set(journalEntries.map(e => e.date));
   let streak = 0;
   const today = new Date();
@@ -84,7 +84,7 @@ function calcJournalStreak(journalEntries) {
 
 function calcTradingStreak(trades) {
   if (!trades || trades.length === 0) return 0;
-  const dates = new Set(trades.map(t => t.date));
+  const dates = new Set(trades.map(tr => tr.date));
   let streak = 0;
   const today = new Date();
   for (let i = 0; i < 365; i++) {
@@ -100,8 +100,8 @@ function calcMaxWinStreak(trades) {
   if (!trades || trades.length === 0) return 0;
   const sorted = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
   let max = 0, cur = 0;
-  sorted.forEach(t => {
-    if (t.pnl > 0) { cur++; max = Math.max(max, cur); } else { cur = 0; }
+  sorted.forEach(tr => {
+    if (tr.pnl > 0) { cur++; max = Math.max(max, cur); } else { cur = 0; }
   });
   return max;
 }
@@ -136,7 +136,7 @@ function calcXP(stats) {
 export { BADGES, LEVELS, XP_TABLE };
 
 export function useGamification({ trades, stats, journalEntries, settings }) {
-  const journalStreak  = useMemo(() => calcJournalStreak(journalEntries), [journalEntries]);
+  const journalStreak  = useMemo(() => calcJournalStreak(journalEntries || []), [journalEntries]);
   const tradingStreak  = useMemo(() => calcTradingStreak(trades),         [trades]);
   const maxWinStreak   = useMemo(() => calcMaxWinStreak(trades),          [trades]);
 
@@ -150,7 +150,7 @@ export function useGamification({ trades, stats, journalEntries, settings }) {
     profitFactor:   stats?.profitFactor   || 0,
     avgRR:          stats?.avgRR          || 0,
     totalPnl:       stats?.totalPnl       || 0,
-    journalEntries: journalEntries?.length || 0,
+    journalEntries: (journalEntries || []).length,
     journalStreak,
     tradingStreak,
     maxWinStreak,
@@ -172,13 +172,13 @@ export function useGamification({ trades, stats, journalEntries, settings }) {
     const targetT = settings?.targetTradesPerMonth || 20;
     const now     = new Date();
     const mm      = now.toISOString().slice(0, 7);
-    const monthTrades = (trades || []).filter(t => t.date?.startsWith(mm));
+    const monthTrades = (trades || []).filter(tr => tr.date?.startsWith(mm));
     return {
       trades:    monthTrades.length,
       target:    targetT,
       pct:       Math.min(100, (monthTrades.length / targetT) * 100),
-      wins:      monthTrades.filter(t => t.pnl > 0).length,
-      pnl:       monthTrades.reduce((s, t) => s + t.pnl, 0),
+      wins:      monthTrades.filter(tr => tr.pnl > 0).length,
+      pnl:       monthTrades.reduce((s, tr) => s + tr.pnl, 0),
     };
   }, [trades, settings]);
 

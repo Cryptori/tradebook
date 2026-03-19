@@ -14,6 +14,8 @@ import { usePortfolio }            from "./hooks/usePortfolio";
 import { useEconomicCalendar }      from "./hooks/useEconomicCalendar";
 import { useGamification }          from "./hooks/useGamification";
 import { useTradingPlan }           from "./hooks/useTradingPlan";
+import { useBacktest }              from "./hooks/useBacktest";
+import { useBroker }                from "./hooks/useBroker";
 import AIFloatingChat from "./components/AIFloatingChat";
 
 // ── Always-loaded (above the fold / critical) ─────────────────────
@@ -49,8 +51,10 @@ const Portfolio         = lazy(() => import("./components/pages/Portfolio"));
 const EconomicCalendar  = lazy(() => import("./components/pages/EconomicCalendar"));
 const Gamification      = lazy(() => import("./components/pages/Gamification"));
 const TradingPlan       = lazy(() => import("./components/pages/TradingPlan"));
+const BacktestJournal   = lazy(() => import("./components/pages/BacktestJournal"));
+const BrokerComparison  = lazy(() => import("./components/pages/BrokerComparison"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -118,6 +122,8 @@ export default function TradingJournal() {
   const calendarHook     = useEconomicCalendar(trades);
   const gamificationHook = useGamification({ trades, stats, journalEntries: dailyJournalHook.entries, settings });
   const planHook         = useTradingPlan(trades, stats, settings, currencyMeta);
+  const backtestHook     = useBacktest(trades, playbookHook.setups);
+  const brokerHook       = useBroker(trades);
   const { toasts, dismissToast, pushEnabled, enablePush } = useNotifications({
     stats, settings, currencyMeta,
     journalEntries: dailyJournalHook.entries,
@@ -196,6 +202,7 @@ export default function TradingJournal() {
       <div className="page-wrapper">
         <ErrorBoundary theme={theme}>
           <Suspense fallback={<TabFallback tab={activeTab} />}>
+            <div key={activeTab} className="tab-content">
 
             {activeTab === "dashboard" && (
               <Dashboard
@@ -228,6 +235,7 @@ export default function TradingJournal() {
                 trades={trades} stats={stats} strategyStats={strategyStats}
                 marketBreakdown={marketBreakdown} emotionStats={emotionStats}
                 currencyMeta={currencyMeta} theme={theme}
+                settings={settings}
               />
             )}
 
@@ -306,6 +314,14 @@ export default function TradingJournal() {
               <TradingPlan planHook={planHook} theme={theme} />
             )}
 
+            {activeTab === "backtest" && (
+              <BacktestJournal backtestHook={backtestHook} theme={theme} />
+            )}
+
+            {activeTab === "broker" && (
+              <BrokerComparison brokerHook={brokerHook} theme={theme} />
+            )}
+
             {activeTab === "risk" && (
               <RiskCalculator settings={settings} currencyMeta={currencyMeta} theme={theme} />
             )}
@@ -324,6 +340,7 @@ export default function TradingJournal() {
               </Suspense>
             )}
 
+            </div>
           </Suspense>
         </ErrorBoundary>
       </div>

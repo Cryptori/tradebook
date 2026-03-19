@@ -78,18 +78,18 @@ export function useTradingPlan(trades, stats, settings, currencyMeta) {
   // Trades for active week
   const weekTrades = useMemo(() => {
     const weekEnd = getWeekEnd(activeWeek);
-    return (trades || []).filter(t => t.date >= activeWeek && t.date <= weekEnd);
+    return (trades || []).filter(tr => tr.date >= activeWeek && tr.date <= weekEnd);
   }, [trades, activeWeek]);
 
   // Week stats vs plan
   const weekReview = useMemo(() => {
     if (!currentPlan) return null;
-    const pnl      = weekTrades.reduce((s, t) => s + t.pnl, 0);
-    const wins     = weekTrades.filter(t => t.pnl > 0).length;
+    const pnl      = weekTrades.reduce((s, tr) => s + tr.pnl, 0);
+    const wins     = weekTrades.filter(tr => tr.pnl > 0).length;
     const winRate  = weekTrades.length > 0 ? (wins / weekTrades.length) * 100 : 0;
     const worstDay = {};
-    weekTrades.forEach(t => {
-      worstDay[t.date] = (worstDay[t.date] || 0) + t.pnl;
+    weekTrades.forEach(tr => {
+      worstDay[tr.date] = (worstDay[tr.date] || 0) + tr.pnl;
     });
     const maxDailyLoss = Math.min(0, ...Object.values(worstDay), 0);
 
@@ -113,7 +113,7 @@ export function useTradingPlan(trades, stats, settings, currencyMeta) {
   // All weeks with plans
   const allWeeks = useMemo(() => {
     const planWeeks = new Set(plans.map(p => p.weekStart));
-    const tradeWeeks = new Set((trades || []).map(t => getWeekKey(t.date)));
+    const tradeWeeks = new Set((trades || []).map(tr => getWeekKey(tr.date)));
     const allW = new Set([...planWeeks, ...tradeWeeks, getCurrentWeekKey()]);
     return [...allW].sort().reverse().slice(0, 12);
   }, [plans, trades]);

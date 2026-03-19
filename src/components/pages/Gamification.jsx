@@ -99,11 +99,12 @@ function BadgeGrid({ badges, theme: t }) {
 
 // ── Monthly Progress ─────────────────────────────────────────────
 function MonthlyProgress({ monthProgress, currencyMeta, theme: t }) {
+  const { isMobile } = useBreakpoint();
   const sym = currencyMeta?.symbol ?? "$";
   return (
     <div style={{ background: `linear-gradient(135deg, ${t.bgCard}, ${t.bgCard2})`, border: `1px solid ${t.border}`, borderRadius: 16, padding: "20px" }}>
       <div style={{ fontSize: 11, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>Progress Bulan Ini</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
         {[
           { label: "Trades",   value: `${monthProgress.trades}/${monthProgress.target}`, color: t.text },
           { label: "Wins",     value: monthProgress.wins,                                 color: "#00d4aa" },
@@ -146,7 +147,7 @@ export default function Gamification({ gamificationHook, currencyMeta, theme }) 
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={{ fontSize: 11, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em" }}>Streak Aktif</div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 10 }}>
             <StreakCard label="Journal Streak"  count={journalStreak}  icon="📝" color="#00d4aa" theme={t} />
             <StreakCard label="Trading Streak"  count={tradingStreak}  icon="📅" color="#3b82f6" theme={t} />
             <StreakCard label="Win Streak Max"  count={maxWinStreak}   icon="🔥" color="#f59e0b" theme={t} suffix="wins" />

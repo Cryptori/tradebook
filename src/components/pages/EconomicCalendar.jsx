@@ -300,13 +300,15 @@ export default function EconomicCalendar({ calendarHook, theme }) {
 
       {/* Events grouped by date */}
       {Object.keys(grouped).length === 0 ? (
-        <div className="stat-card" style={{ textAlign: "center", padding: "60px 20px" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
-          <div style={{ fontSize: 14, color: t.text, marginBottom: 6 }}>Tidak ada event</div>
-          <div style={{ fontSize: 12, color: t.textDim, marginBottom: 20 }}>
-            {loading ? "Sedang mengambil data..." : "Coba ganti filter atau tambah event manual"}
+        <div className="stat-card">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "56px 24px", textAlign: "center" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg, rgba(0,200,150,0.08), rgba(0,200,150,0.04))", border: "1px solid rgba(0,200,150,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 20 }}>📅</div>
+            <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 8 }}>Tidak ada event</div>
+            <div style={{ fontSize: 12, color: t.textDim, maxWidth: 280, lineHeight: 1.8, marginBottom: 20 }}>
+              {loading ? "Sedang mengambil data dari Forex Factory..." : "Coba ganti filter atau tambah event manual"}
+            </div>
+            <button onClick={openAdd} className="btn-primary" style={{ fontSize: 12 }}>+ Tambah Event Manual</button>
           </div>
-          <button onClick={openAdd} className="btn-primary">+ Tambah Event Manual</button>
         </div>
       ) : (
         <div className="stat-card" style={{ padding: 0, overflow: "hidden" }}>

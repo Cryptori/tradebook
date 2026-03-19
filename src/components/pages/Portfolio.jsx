@@ -234,11 +234,13 @@ export default function Portfolio({ portfolioHook, settings, currencyMeta, theme
 
       {/* Positions list */}
       {positions.length === 0 ? (
-        <div className="stat-card" style={{ textAlign: "center", padding: "60px 20px" }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
-          <div style={{ fontSize: 14, color: t.text, marginBottom: 6 }}>Belum ada posisi open</div>
-          <div style={{ fontSize: 12, color: t.textDim, marginBottom: 20 }}>Tambah posisi manual atau buka trade di Journal tanpa exit price</div>
-          <button onClick={openAdd} className="btn-primary">+ Tambah Posisi</button>
+        <div className="stat-card">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "56px 24px", textAlign: "center" }}>
+            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "linear-gradient(135deg, rgba(0,200,150,0.08), rgba(0,200,150,0.04))", border: "1px solid rgba(0,200,150,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, marginBottom: 20 }}>📊</div>
+            <div style={{ fontSize: 15, fontWeight: 500, color: t.text, marginBottom: 8 }}>Belum ada posisi open</div>
+            <div style={{ fontSize: 12, color: t.textDim, maxWidth: 280, lineHeight: 1.8, marginBottom: 20 }}>Tambah posisi manual atau buka trade di Journal tanpa mengisi exit price</div>
+            <button onClick={openAdd} className="btn-primary" style={{ fontSize: 12 }}>+ Tambah Posisi</button>
+          </div>
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>

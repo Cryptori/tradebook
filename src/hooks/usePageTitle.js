@@ -16,7 +16,9 @@ const TAB_TITLES = {
   "calendar-eco":  "Economic Calendar",
   achievements: "Achievements",
   plan:         "Trading Plan",
-  risk:         "Risk Calculator",
+  backtest: "Backtest Journal",
+  broker:   "Broker Comparison",
+  risk:     "Risk Calculator",
   settings:  "Settings",
 };
 
