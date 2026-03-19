@@ -12,6 +12,7 @@ import { useDailyJournal }     from "./hooks/useDailyJournal";
 import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
 import { usePortfolio }            from "./hooks/usePortfolio";
 import { useEconomicCalendar }      from "./hooks/useEconomicCalendar";
+import { useGamification }          from "./hooks/useGamification";
 import AIFloatingChat from "./components/AIFloatingChat";
 
 // ── Always-loaded (above the fold / critical) ─────────────────────
@@ -45,8 +46,9 @@ const SharePerformance  = lazy(() => import("./components/pages/SharePerformance
 const AIAdvisor         = lazy(() => import("./components/pages/AIAdvisor"));
 const Portfolio         = lazy(() => import("./components/pages/Portfolio"));
 const EconomicCalendar  = lazy(() => import("./components/pages/EconomicCalendar"));
+const Gamification      = lazy(() => import("./components/pages/Gamification"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -112,6 +114,7 @@ export default function TradingJournal() {
   const aiHook           = useAIAdvisor();
   const portfolioHook    = usePortfolio(trades);
   const calendarHook     = useEconomicCalendar(trades);
+  const gamificationHook = useGamification({ trades, stats, journalEntries: dailyJournalHook.entries, settings });
   const { toasts, dismissToast, pushEnabled, enablePush } = useNotifications({
     stats, settings, currencyMeta,
     journalEntries: dailyJournalHook.entries,
@@ -284,6 +287,14 @@ export default function TradingJournal() {
 
             {activeTab === "calendar-eco" && (
               <EconomicCalendar calendarHook={calendarHook} theme={theme} />
+            )}
+
+            {activeTab === "achievements" && (
+              <Gamification
+                gamificationHook={gamificationHook}
+                currencyMeta={currencyMeta}
+                theme={theme}
+              />
             )}
 
             {activeTab === "risk" && (

@@ -14,8 +14,9 @@ const TAB_LABELS = {
   share:     "Share",
   ai:        "AI",
   portfolio:      "Porto",
-  "calendar-eco": "Kalender",
-  risk:           "Risk",
+  "calendar-eco":  "Kalender",
+  achievements:    "Achievements",
+  risk:            "Risk",
   settings:  "Settings",
 };
 
