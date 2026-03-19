@@ -12,7 +12,7 @@ export default function Analytics({ trades, stats, strategyStats, marketBreakdow
   const t   = theme;
   const sym = currencyMeta?.symbol ?? "$";
   const { isMobile, md } = useBreakpoint();
-  const maxStrategyPnl = Math.max(...strategyStats.map(x => Math.abs(x.pnl)), 1);
+  const maxStrategyPnl = strategyStats.length > 0 ? Math.max(...strategyStats.map(x => Math.abs(x.pnl)), 1) : 1;
 
   return (
     <div>

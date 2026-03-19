@@ -22,19 +22,19 @@ function getMonthKey(dateStr) {
 
 function calcPeriodStats(trades) {
   if (!trades.length) return null;
-  const wins   = trades.filter(t => t.pnl > 0);
-  const losses = trades.filter(t => t.pnl <= 0);
+  const wins   = trades.filter(tr => tr.pnl > 0);
+  const losses = trades.filter(tr => tr.pnl <= 0);
   const totalPnl    = trades.reduce((s, t) => s + t.pnl, 0);
   const grossProfit = wins.reduce((s, t) => s + t.pnl, 0);
   const grossLoss   = Math.abs(losses.reduce((s, t) => s + t.pnl, 0));
-  const avgRR       = trades.filter(t => t.rr).length
-    ? trades.filter(t => t.rr).reduce((s, t) => s + (t.rr ?? 0), 0) / trades.filter(t => t.rr).length
+  const avgRR       = trades.filter(tr => tr.rr).length
+    ? trades.filter(tr => tr.rr).reduce((s, t) => s + (t.rr ?? 0), 0) / trades.filter(tr => tr.rr).length
     : 0;
 
   // Best/worst streak
   let streak = 0, maxWin = 0, maxLoss = 0, curStreak = 0, curType = null;
-  [...trades].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(t => {
-    const type = t.pnl > 0 ? "win" : "loss";
+  [...trades].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(tr => {
+    const type = tr.pnl > 0 ? "win" : "loss";
     if (type === curType) { curStreak++; }
     else { curStreak = 1; curType = type; }
     if (type === "win"  && curStreak > maxWin)  maxWin  = curStreak;
@@ -45,10 +45,10 @@ function calcPeriodStats(trades) {
   const pairCount     = {};
   const stratCount    = {};
   const emotionCount  = {};
-  trades.forEach(t => {
-    pairCount[t.pair]         = (pairCount[t.pair]         ?? 0) + 1;
-    stratCount[t.strategy]    = (stratCount[t.strategy]    ?? 0) + 1;
-    emotionCount[t.emotion]   = (emotionCount[t.emotion]   ?? 0) + 1;
+  trades.forEach(tr => {
+    pairCount[tr.pair]         = (pairCount[tr.pair]         ?? 0) + 1;
+    stratCount[tr.strategy]    = (stratCount[tr.strategy]    ?? 0) + 1;
+    emotionCount[tr.emotion]   = (emotionCount[tr.emotion]   ?? 0) + 1;
   });
   const topPair     = Object.entries(pairCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
   const topStrategy = Object.entries(stratCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
@@ -70,7 +70,7 @@ function calcPeriodStats(trades) {
 
 function groupTradesByPeriod(trades, mode) {
   const groups = {};
-  trades.forEach(t => {
+  trades.forEach(tr => {
     const key = mode === "weekly" ? getWeekKey(t.date) : getMonthKey(t.date);
     if (!groups[key]) groups[key] = [];
     groups[key].push(t);
@@ -142,7 +142,7 @@ function DetailPanel({ period, sym, allTrades, theme: t }) {
   const sortedT   = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
   const dailyData = useMemo(() => {
     const map = {};
-    trades.forEach(t => {
+    trades.forEach(tr => {
       map[t.date] = (map[t.date] ?? 0) + t.pnl;
     });
     return Object.entries(map)

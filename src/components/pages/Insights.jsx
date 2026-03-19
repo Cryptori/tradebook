@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { formatCurrency } from "../../utils/formatters";
 import {
   BarChart, Bar, Cell, XAxis, YAxis, Tooltip,
@@ -86,6 +87,7 @@ function buildWeeklyData(trades) {
 export default function Insights({ trades, currencyMeta, theme }) {
   const t = theme;
   const sym = currencyMeta?.symbol ?? "$";
+  const { isMobile } = useBreakpoint();
 
   const streaks    = useMemo(() => calcStreaks(trades), [trades]);
   const weeklyData = useMemo(() => buildWeeklyData(trades), [trades]);
@@ -164,7 +166,7 @@ export default function Insights({ trades, currencyMeta, theme }) {
         {weeklyData.length > 0 ? (
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={weeklyData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke={t.chartGrid ?? "rgba(30,58,95,0.3)"} vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke={t.chartGrid} vertical={false} />
               <XAxis dataKey="label" tick={{ fill: t.textDim, fontSize: 10 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: t.textDim, fontSize: 10 }} axisLine={false} tickLine={false} width={52}
                 tickFormatter={v => `${v >= 0 ? "+" : ""}${v}`} />
@@ -181,7 +183,7 @@ export default function Insights({ trades, currencyMeta, theme }) {
         )}
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 16 }}>
         {/* Day of week */}
         <div className="stat-card" style={{ background: `linear-gradient(135deg, ${t.bgCard}, ${t.bgCard2})`, borderColor: t.border }}>
           <div style={{ fontSize: 11, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14 }}>P&L by Day of Week</div>

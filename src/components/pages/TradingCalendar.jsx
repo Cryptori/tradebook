@@ -19,7 +19,7 @@ function TradeCard({ trade, sym, t }) {
             background: isBuy ? "rgba(0,212,170,0.1)" : "rgba(245,158,11,0.1)",
             color: isBuy ? "#00d4aa" : "#f59e0b" }}>{trade.side}</span>
           <span style={{ fontSize: 12, color: t.text, fontWeight: 500 }}>{trade.pair}</span>
-          {trade.screenshotUrl && <span style={{ fontSize: 10 }}>📷</span>}
+          {(trade.screenshots?.[0] || trade.screenshotUrl) && <span style={{ fontSize: 10 }}>📷</span>}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: 12, color: trade.pnl >= 0 ? "#00d4aa" : "#ef4444", fontWeight: 500 }}>
@@ -51,9 +51,9 @@ function TradeCard({ trade, sym, t }) {
               "{trade.notes}"
             </div>
           )}
-          {trade.screenshotUrl && (
+          {(trade.screenshots?.[0] || trade.screenshotUrl) && (
             <>
-              <img src={trade.screenshotUrl} alt="Screenshot"
+              <img src={trade.screenshots?.[0] || trade.screenshotUrl} alt="Screenshot"
                 onClick={() => setImgOpen(true)}
                 style={{ width: "100%", borderRadius: 6, cursor: "zoom-in", maxHeight: 120, objectFit: "cover", border: `1px solid ${t.border}` }}
                 onError={e => { e.target.style.display = "none"; }} />
