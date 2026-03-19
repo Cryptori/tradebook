@@ -3,6 +3,7 @@ import { useState, useCallback, useMemo } from "react";
 const STORAGE_KEY = "tb_portfolio_positions";
 
 function loadPositions() {
+  if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
@@ -54,7 +55,7 @@ function calcSlPct(pos) {
 }
 
 export function usePortfolio(trades) {
-  const [positions, setPositions] = useState(loadPositions);
+  const [positions, setPositions] = useState(() => { try { return loadPositions(); } catch { return []; } });
   const [form,      setForm]      = useState(EMPTY_POSITION);
   const [showForm,  setShowForm]  = useState(false);
   const [editId,    setEditId]    = useState(null);
