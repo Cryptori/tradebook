@@ -8,6 +8,11 @@ const TAB_TITLES = {
   insights:  "Insights",
   review:    "Review",
   playbook:  "Playbook",
+  daily:     "Daily Journal",
+  replay:    "Trade Replay",
+  share:     "Share",
+  ai:        "AI Advisor",
+  portfolio: "Portfolio",
   risk:      "Risk Calculator",
   settings:  "Settings",
 };

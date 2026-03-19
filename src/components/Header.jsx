@@ -12,6 +12,8 @@ const TAB_LABELS = {
   daily:     "Daily",
   replay:    "Replay",
   share:     "Share",
+  ai:        "AI",
+  portfolio: "Porto",
   risk:      "Risk",
   settings:  "Settings",
 };

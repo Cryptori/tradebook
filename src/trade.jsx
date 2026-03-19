@@ -10,8 +10,8 @@ import { useNotifications } from "./hooks/useNotifications";
 import { usePlaybook }        from "./hooks/usePlaybook";
 import { useDailyJournal }     from "./hooks/useDailyJournal";
 import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
+import { usePortfolio }        from "./hooks/usePortfolio";
 import AIFloatingChat from "./components/AIFloatingChat";
-
 
 // ── Always-loaded (above the fold / critical) ─────────────────────
 import NotificationsContainer from "./components/Notifications";
@@ -42,9 +42,9 @@ const DailyJournal      = lazy(() => import("./components/pages/DailyJournal"));
 const TradeReplay       = lazy(() => import("./components/pages/TradeReplay"));
 const SharePerformance  = lazy(() => import("./components/pages/SharePerformance"));
 const AIAdvisor         = lazy(() => import("./components/pages/AIAdvisor"));
+const Portfolio         = lazy(() => import("./components/pages/Portfolio"));
 
-
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -105,10 +105,11 @@ export default function TradingJournal() {
     handleSubmit, handleDelete, handleImport,
   } = useTrades(settings.capitalInitial, accountsHook.activeAccountId);
 
-  const { toasts, dismissToast } = useNotifications({ stats, settings, currencyMeta });
+  const { toasts, dismissToast, pushEnabled, enablePush } = useNotifications({ stats, settings, currencyMeta, journalEntries: dailyJournalHook.entries, trades });
   const playbookHook    = usePlaybook();
   const dailyJournalHook = useDailyJournal();
   const aiHook           = useAIAdvisor();
+  const portfolioHook    = usePortfolio(trades);
 
   // ── Page title
   usePageTitle(activeTab);
@@ -265,6 +266,15 @@ export default function TradingJournal() {
               <AIAdvisor aiHook={aiHook} theme={theme} />
             )}
 
+            {activeTab === "portfolio" && (
+              <Portfolio
+                portfolioHook={portfolioHook}
+                settings={settings}
+                currencyMeta={currencyMeta}
+                theme={theme}
+              />
+            )}
+
             {activeTab === "risk" && (
               <RiskCalculator settings={settings} currencyMeta={currencyMeta} theme={theme} />
             )}
@@ -303,4 +313,3 @@ export default function TradingJournal() {
     </div>
   );
 }
-
