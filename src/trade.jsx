@@ -196,6 +196,7 @@ export default function TradingJournal() {
 
             {activeTab === "dashboard" && (
               <Dashboard
+                gamificationHook={gamificationHook}
                 stats={stats} equityCurve={equityCurve} monthlyPnl={monthlyPnl}
                 marketBreakdown={marketBreakdown} settings={settings}
                 currencyMeta={currencyMeta} theme={theme}

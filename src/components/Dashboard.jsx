@@ -18,7 +18,7 @@ const chartTooltip = (t) => ({
   contentStyle: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 8, fontFamily: "DM Mono", fontSize: 12, color: t.text },
 });
 
-export default function Dashboard({ stats, equityCurve, monthlyPnl, marketBreakdown, settings, currencyMeta, theme, onExportPdf, pdfMonth, onPdfMonthChange, trades }) {
+export default function Dashboard({ stats, equityCurve, monthlyPnl, marketBreakdown, settings, currencyMeta, theme, onExportPdf, pdfMonth, onPdfMonthChange, trades, gamificationHook }) {
   const t   = theme;
   const sym = currencyMeta?.symbol ?? "$";
   const { isMobile, isTablet, md } = useBreakpoint();
@@ -149,6 +149,60 @@ export default function Dashboard({ stats, equityCurve, monthlyPnl, marketBreakd
 
       {/* Target Tracker */}
       <TargetTracker stats={stats} settings={settings} currencyMeta={currencyMeta} theme={t} />
+
+      {/* Gamification Widget */}
+      {gamificationHook && (
+        <div className="stat-card" style={{ marginBottom: 16 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+            {/* Level */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(0,212,170,0.15), rgba(0,212,170,0.3))", border: "2px solid rgba(0,212,170,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>
+                {gamificationHook.level.current.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em" }}>Level {gamificationHook.level.current.level}</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: "#00d4aa" }}>{gamificationHook.level.current.name}</div>
+                <div style={{ fontSize: 10, color: t.textDim }}>{gamificationHook.xp} XP</div>
+              </div>
+            </div>
+
+            {/* Streaks */}
+            <div style={{ display: "flex", gap: 16 }}>
+              {[
+                { icon: "📝", count: gamificationHook.journalStreak,  label: "Journal" },
+                { icon: "📅", count: gamificationHook.tradingStreak,  label: "Trading" },
+                { icon: "🔥", count: gamificationHook.maxWinStreak,   label: "Win Max" },
+              ].map(s => (
+                <div key={s.label} style={{ textAlign: "center" }}>
+                  <div style={{ fontSize: 16 }}>{s.icon}</div>
+                  <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, color: s.count > 0 ? "#00d4aa" : t.textDim, lineHeight: 1 }}>{s.count}</div>
+                  <div style={{ fontSize: 9, color: t.textDim }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Badges count */}
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>Badges</div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, color: "#f59e0b" }}>
+                {gamificationHook.earnedBadges.filter(b => b.earned).length}/{gamificationHook.earnedBadges.length}
+              </div>
+            </div>
+
+            {/* Level progress bar */}
+            {gamificationHook.level.next && (
+              <div style={{ flex: 1, minWidth: 120 }}>
+                <div style={{ fontSize: 10, color: t.textDim, marginBottom: 4 }}>
+                  Menuju {gamificationHook.level.next.name} {gamificationHook.level.next.icon}
+                </div>
+                <div style={{ height: 6, background: t.bgSubtle, borderRadius: 3, overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${gamificationHook.level.progress}%`, background: "linear-gradient(90deg, #00d4aa60, #00d4aa)", borderRadius: 3, transition: "width 0.8s ease" }} />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Recent Trades */}
       {trades?.length > 0 && (
