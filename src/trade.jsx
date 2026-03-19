@@ -219,6 +219,7 @@ export default function TradingJournal() {
                 onAdd={openAddForm} onEdit={openEditForm}
                 onDelete={handleDelete} onImport={handleImport} theme={theme}
                 currencyMeta={currencyMeta}
+                trades={trades} stats={stats} settings={settings}
               />
             )}
 

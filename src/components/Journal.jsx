@@ -3,7 +3,8 @@ import { useBreakpoint } from "../hooks/useBreakpoint";
 import TradeDetailModal from "./TradeDetailModal";
 import { MARKETS } from "../constants";
 import { formatCurrency } from "../utils/formatters";
-import { exportToCsv } from "../utils/exportCsv";
+import { exportToCsv }   from "../utils/exportCsv";
+import { exportToExcel } from "../utils/exportExcel";
 import { parseCsvFile } from "../utils/importCsv";
 import DateRangeFilter from "./DateRangeFilter";
 
@@ -21,6 +22,7 @@ export default function Journal({
   filteredTrades, filterMarket, setFilterMarket,
   dateFrom, dateTo, onFromChange, onToChange, onClearDates,
   onAdd, onEdit, onDelete, onImport, theme, currencyMeta,
+  trades, stats, settings,
 }) {
   const t       = theme;
   const fileRef = useRef(null);
@@ -74,7 +76,8 @@ export default function Journal({
             <option value="All">All Markets</option>
             {MARKETS.map(m => <option key={m}>{m}</option>)}
           </select>
-          <button className="btn-ghost" onClick={handleExport} disabled={filteredTrades.length === 0}>↓ Export CSV</button>
+          <button className="btn-ghost" onClick={handleExport} disabled={filteredTrades.length === 0}>↓ CSV</button>
+              <button className="btn-ghost" onClick={() => exportToExcel(trades, stats, settings, currencyMeta)} disabled={trades.length === 0}>↓ Excel</button>
           <button className="btn-ghost" onClick={() => fileRef.current?.click()}>↑ Import CSV</button>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleImportFile} style={{ display: "none" }} />
           <button className="btn-primary" onClick={onAdd}>+ LOG TRADE</button>
