@@ -105,11 +105,15 @@ export default function TradingJournal() {
     handleSubmit, handleDelete, handleImport,
   } = useTrades(settings.capitalInitial, accountsHook.activeAccountId);
 
-  const { toasts, dismissToast, pushEnabled, enablePush } = useNotifications({ stats, settings, currencyMeta, journalEntries: dailyJournalHook.entries, trades });
-  const playbookHook    = usePlaybook();
+  const playbookHook     = usePlaybook();
   const dailyJournalHook = useDailyJournal();
   const aiHook           = useAIAdvisor();
   const portfolioHook    = usePortfolio(trades);
+  const { toasts, dismissToast, pushEnabled, enablePush } = useNotifications({
+    stats, settings, currencyMeta,
+    journalEntries: dailyJournalHook.entries,
+    trades,
+  });
 
   // ── Page title
   usePageTitle(activeTab);
