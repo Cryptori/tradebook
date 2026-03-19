@@ -24,11 +24,11 @@ function calcPeriodStats(trades) {
   if (!trades.length) return null;
   const wins   = trades.filter(tr => tr.pnl > 0);
   const losses = trades.filter(tr => tr.pnl <= 0);
-  const totalPnl    = trades.reduce((s, t) => s + t.pnl, 0);
-  const grossProfit = wins.reduce((s, t) => s + t.pnl, 0);
-  const grossLoss   = Math.abs(losses.reduce((s, t) => s + t.pnl, 0));
+  const totalPnl    = trades.reduce((s, tr) => s + tr.pnl, 0);
+  const grossProfit = wins.reduce((s, tr) => s + tr.pnl, 0);
+  const grossLoss   = Math.abs(losses.reduce((s, tr) => s + tr.pnl, 0));
   const avgRR       = trades.filter(tr => tr.rr).length
-    ? trades.filter(tr => tr.rr).reduce((s, t) => s + (t.rr ?? 0), 0) / trades.filter(tr => tr.rr).length
+    ? trades.filter(tr => tr.rr).reduce((s, tr) => s + (tr.rr ?? 0), 0) / trades.filter(tr => tr.rr).length
     : 0;
 
   // Best/worst streak
@@ -63,17 +63,17 @@ function calcPeriodStats(trades) {
     avgLoss: losses.length ? -grossLoss  / losses.length : 0,
     avgRR, maxWinStreak: maxWin, maxLossStreak: maxLoss,
     topPair, topStrategy, topEmotion,
-    bestTrade:  Math.max(...trades.map(t => t.pnl)),
-    worstTrade: Math.min(...trades.map(t => t.pnl)),
+    bestTrade:  Math.max(...trades.map(tr => tr.pnl)),
+    worstTrade: Math.min(...trades.map(tr => tr.pnl)),
   };
 }
 
 function groupTradesByPeriod(trades, mode) {
   const groups = {};
   trades.forEach(tr => {
-    const key = mode === "weekly" ? getWeekKey(t.date) : getMonthKey(t.date);
+    const key = mode === "weekly" ? getWeekKey(tr.date) : getMonthKey(tr.date);
     if (!groups[key]) groups[key] = [];
-    groups[key].push(t);
+    groups[key].push(tr);
   });
   return Object.entries(groups)
     .sort((a, b) => b[0].localeCompare(a[0])) // newest first
@@ -143,7 +143,7 @@ function DetailPanel({ period, sym, allTrades, theme: t }) {
   const dailyData = useMemo(() => {
     const map = {};
     trades.forEach(tr => {
-      map[t.date] = (map[t.date] ?? 0) + t.pnl;
+      map[tr.date] = (map[tr.date] ?? 0) + tr.pnl;
     });
     return Object.entries(map)
       .sort((a, b) => a[0].localeCompare(b[0]))
