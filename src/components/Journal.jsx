@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import TradeDetailModal from "./TradeDetailModal";
 import { MARKETS } from "../constants";
 import { formatCurrency } from "../utils/formatters";
 import { exportToCsv }   from "../utils/exportCsv";
-import { exportToExcel } from "../utils/exportExcel";
+import { exportToExcel }      from "../utils/exportExcel";
+import BrokerImportModal from "./BrokerImportModal";
 import { parseCsvFile } from "../utils/importCsv";
 import DateRangeFilter from "./DateRangeFilter";
 
@@ -22,12 +23,13 @@ export default function Journal({
   filteredTrades, filterMarket, setFilterMarket,
   dateFrom, dateTo, onFromChange, onToChange, onClearDates,
   onAdd, onEdit, onDelete, onImport, theme, currencyMeta,
-  trades, stats, settings,
+  trades, stats, settings, onShareTrade,
 }) {
   const t       = theme;
   const fileRef = useRef(null);
   const sym     = currencyMeta?.symbol ?? "$";
   const { isMobile } = useBreakpoint();
+  const [showBrokerImport, setShowBrokerImport] = React.useState(false);
 
   const COL_TEMPLATE = isMobile
     ? "80px 1fr 60px 80px 60px"
@@ -78,6 +80,7 @@ export default function Journal({
           </select>
           <button className="btn-ghost" onClick={handleExport} disabled={filteredTrades.length === 0}>↓ CSV</button>
               <button className="btn-ghost" onClick={() => exportToExcel(trades, stats, settings, currencyMeta)} disabled={trades.length === 0}>↓ Excel</button>
+              <button className="btn-primary" onClick={() => setShowBrokerImport(true)} style={{ fontSize: 11, padding: "6px 12px" }}>↑ Import Broker</button>
           <button className="btn-ghost" onClick={() => fileRef.current?.click()}>↑ Import CSV</button>
           <input ref={fileRef} type="file" accept=".csv" onChange={handleImportFile} style={{ display: "none" }} />
           <button className="btn-primary" onClick={onAdd}>+ LOG TRADE</button>
@@ -141,6 +144,18 @@ export default function Journal({
           onDelete={id => { setSelectedTrade(null); onDelete(id); }}
           currencyMeta={currencyMeta}
           theme={t}
+        />
+      )}
+
+      {showBrokerImport && (
+        <BrokerImportModal
+          onImport={(importedTrades) => {
+            if (onImport) onImport(importedTrades);
+            setShowBrokerImport(false);
+          }}
+          existingTrades={trades}
+          theme={theme}
+          onClose={() => setShowBrokerImport(false)}
         />
       )}
     </div>

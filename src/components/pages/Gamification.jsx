@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
+import StreakPage from "./StreakPage";
 import { formatCurrency } from "../../utils/formatters";
 import { BADGES } from "../../hooks/useGamification";
 
@@ -131,15 +133,31 @@ function MonthlyProgress({ monthProgress, currencyMeta, theme: t }) {
 }
 
 // ── Main Gamification Page ───────────────────────────────────────
-export default function Gamification({ gamificationHook, currencyMeta, theme }) {
+export default function Gamification({ gamificationHook, streakHook, currencyMeta, theme }) {
   const t = theme;
   const { isMobile } = useBreakpoint();
+  const [panel, setPanel] = useState("achievements"); // "achievements" | "streak"
   const { xp, level, journalStreak, tradingStreak, maxWinStreak, earnedBadges, monthProgress } = gamificationHook;
 
   return (
     <div>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: 2, color: t.text, marginBottom: 4 }}>ACHIEVEMENTS</div>
-      <div style={{ fontSize: 11, color: t.textDim, marginBottom: 24 }}>Streak, level, dan badge trading kamu</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: 2, color: t.text, lineHeight: 1 }}>ACHIEVEMENTS</div>
+          <div style={{ fontSize: 11, color: t.textDim, marginTop: 4 }}>Streak, level, dan badge trading kamu</div>
+        </div>
+        <div style={{ display: "flex", gap: 4, background: t.bgSubtle, border: `1px solid ${t.border}`, borderRadius: 8, padding: 3 }}>
+          {[{ v: "achievements", l: "🏆 Badges" }, { v: "streak", l: "🔥 Streak" }].map(p => (
+            <button key={p.v} onClick={() => setPanel(p.v)}
+              style={{ padding: "5px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 12, background: panel === p.v ? t.accent : "transparent", color: panel === p.v ? "#090e1a" : t.textDim, fontWeight: panel === p.v ? 600 : 400 }}>
+              {p.l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {panel === "streak" && streakHook && <StreakPage streakHook={streakHook} theme={t} />}
+      {panel === "achievements" && <>
 
       {/* Level + Streaks */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16, marginBottom: 20 }}>
@@ -192,6 +210,8 @@ export default function Gamification({ gamificationHook, currencyMeta, theme }) 
         </div>
         <BadgeGrid badges={earnedBadges} theme={t} />
       </div>
+      </>
+      }
     </div>
   );
 }

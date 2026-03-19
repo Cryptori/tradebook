@@ -1,6 +1,7 @@
 import { formatCurrency, formatPct, formatDate } from "../utils/formatters";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import TargetTracker from "./TargetTracker";
+import StreakWidget from "./StreakWidget";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine,
@@ -80,7 +81,7 @@ function MiniProgress({ label, value, current, target, color, theme: t }) {
 export default function Dashboard({
   stats, equityCurve, monthlyPnl, marketBreakdown,
   settings, currencyMeta, theme, onExportPdf,
-  pdfMonth, onPdfMonthChange, trades, gamificationHook,
+  pdfMonth, onPdfMonthChange, trades, gamificationHook, streakHook,
 }) {
   const t   = theme;
   const sym = currencyMeta?.symbol ?? "$";
@@ -149,6 +150,11 @@ export default function Dashboard({
           color="#0ea5e9"
         />
       </div>
+
+      {/* ── Streak Widget ───────────────────────────────────────── */}
+      {streakHook && (
+        <StreakWidget streakData={streakHook.streakData} theme={t} />
+      )}
 
       {/* ── Charts ───────────────────────────────────────────────── */}
       <div style={{ display: "grid", gridTemplateColumns: cols2, gap: 16 }}>

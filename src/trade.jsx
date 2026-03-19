@@ -13,6 +13,7 @@ import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
 import { usePortfolio }            from "./hooks/usePortfolio";
 import { useEconomicCalendar }      from "./hooks/useEconomicCalendar";
 import { useGamification }          from "./hooks/useGamification";
+import { useStreak }                from "./hooks/useStreak";
 import { useTradingPlan }           from "./hooks/useTradingPlan";
 import { useBacktest }              from "./hooks/useBacktest";
 import { useBroker }                from "./hooks/useBroker";
@@ -121,6 +122,7 @@ export default function TradingJournal() {
   const portfolioHook    = usePortfolio(trades);
   const calendarHook     = useEconomicCalendar(trades);
   const gamificationHook = useGamification({ trades, stats, journalEntries: dailyJournalHook.entries, settings });
+  const streakHook       = useStreak({ trades, journalEntries: dailyJournalHook.entries, settings });
   const planHook         = useTradingPlan(trades, stats, settings, currencyMeta);
   const backtestHook     = useBacktest(trades, playbookHook.setups);
   const brokerHook       = useBroker(trades);
@@ -132,6 +134,13 @@ export default function TradingJournal() {
 
   // ── Page title
   usePageTitle(activeTab);
+
+  // Share trade handler — navigate to share tab
+  function handleShareTrade(trade) {
+    setActiveTab("share");
+    // Store selected trade in sessionStorage for SharePerformance to pick up
+    try { sessionStorage.setItem("tb_share_trade", JSON.stringify(trade)); } catch {}
+  }
 
   // Build AI context — update saat data berubah
   const aiContext = buildAIContext({
@@ -207,6 +216,7 @@ export default function TradingJournal() {
             {activeTab === "dashboard" && (
               <Dashboard
                 gamificationHook={gamificationHook}
+                streakHook={streakHook}
                 stats={stats} equityCurve={equityCurve} monthlyPnl={monthlyPnl}
                 marketBreakdown={marketBreakdown} settings={settings}
                 currencyMeta={currencyMeta} theme={theme}
@@ -227,6 +237,7 @@ export default function TradingJournal() {
                 onDelete={handleDelete} onImport={handleImport} theme={theme}
                 currencyMeta={currencyMeta}
                 trades={trades} stats={stats} settings={settings}
+                onShareTrade={handleShareTrade}
               />
             )}
 
@@ -282,6 +293,7 @@ export default function TradingJournal() {
               <SharePerformance
                 stats={stats} trades={trades} settings={settings}
                 currencyMeta={currencyMeta} theme={theme}
+                gamificationHook={gamificationHook}
               />
             )}
 
@@ -305,6 +317,7 @@ export default function TradingJournal() {
             {activeTab === "achievements" && (
               <Gamification
                 gamificationHook={gamificationHook}
+                streakHook={streakHook}
                 currencyMeta={currencyMeta}
                 theme={theme}
               />
