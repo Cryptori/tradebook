@@ -14,8 +14,9 @@ const TAB_TITLES = {
   ai:        "AI Advisor",
   portfolio:      "Portfolio",
   "calendar-eco":  "Economic Calendar",
-  achievements:    "Achievements",
-  risk:            "Risk Calculator",
+  achievements: "Achievements",
+  plan:         "Trading Plan",
+  risk:         "Risk Calculator",
   settings:  "Settings",
 };
 

@@ -13,6 +13,7 @@ import { useAIAdvisor, buildAIContext } from "./hooks/useAIAdvisor";
 import { usePortfolio }            from "./hooks/usePortfolio";
 import { useEconomicCalendar }      from "./hooks/useEconomicCalendar";
 import { useGamification }          from "./hooks/useGamification";
+import { useTradingPlan }           from "./hooks/useTradingPlan";
 import AIFloatingChat from "./components/AIFloatingChat";
 
 // ── Always-loaded (above the fold / critical) ─────────────────────
@@ -47,8 +48,9 @@ const AIAdvisor         = lazy(() => import("./components/pages/AIAdvisor"));
 const Portfolio         = lazy(() => import("./components/pages/Portfolio"));
 const EconomicCalendar  = lazy(() => import("./components/pages/EconomicCalendar"));
 const Gamification      = lazy(() => import("./components/pages/Gamification"));
+const TradingPlan       = lazy(() => import("./components/pages/TradingPlan"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -115,6 +117,7 @@ export default function TradingJournal() {
   const portfolioHook    = usePortfolio(trades);
   const calendarHook     = useEconomicCalendar(trades);
   const gamificationHook = useGamification({ trades, stats, journalEntries: dailyJournalHook.entries, settings });
+  const planHook         = useTradingPlan(trades, stats, settings, currencyMeta);
   const { toasts, dismissToast, pushEnabled, enablePush } = useNotifications({
     stats, settings, currencyMeta,
     journalEntries: dailyJournalHook.entries,
@@ -296,6 +299,10 @@ export default function TradingJournal() {
                 currencyMeta={currencyMeta}
                 theme={theme}
               />
+            )}
+
+            {activeTab === "plan" && (
+              <TradingPlan planHook={planHook} theme={theme} />
             )}
 
             {activeTab === "risk" && (
