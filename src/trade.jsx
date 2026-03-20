@@ -18,6 +18,8 @@ import { useMarketScanner }         from "./hooks/useMarketScanner";
 import { useDashboardLayout }       from "./hooks/useDashboardLayout";
 import { useCurrency }              from "./hooks/useCurrency";
 import { useRiskRules }             from "./hooks/useRiskRules";
+import { useCustomAlerts }          from "./hooks/useCustomAlerts";
+import { useGoalTracker }           from "./hooks/useGoalTracker";
 import { useAdvancedFilter }        from "./hooks/useAdvancedFilter";
 import { useTradingPlan }           from "./hooks/useTradingPlan";
 import { useBacktest }              from "./hooks/useBacktest";
@@ -62,8 +64,11 @@ const BrokerComparison     = lazy(() => import("./components/pages/BrokerCompari
 const ScreenshotGallery   = lazy(() => import("./components/pages/ScreenshotGallery"));
 const MarketScanner         = lazy(() => import("./components/pages/MarketScanner"));
 const AdvancedFilterPanel   = lazy(() => import("./components/AdvancedFilterPanel"));
+const HeatmapPage           = lazy(() => import("./components/pages/HeatmapPage"));
+const CorrelationAnalysis   = lazy(() => import("./components/pages/CorrelationAnalysis"));
+const TradeReplayModal      = lazy(() => import("./components/pages/TradeReplay"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "gallery", "scanner", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "gallery", "scanner", "heatmap", "correlation", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -135,6 +140,8 @@ export default function TradingJournal() {
   const layoutHook       = useDashboardLayout();
   const currencyHook     = useCurrency(settings);
   const riskStatus       = useRiskRules(trades, settings);
+  const alertsHook       = useCustomAlerts(trades, stats, settings);
+  const goalHook         = useGoalTracker(trades, stats, settings);
   const filterHook       = useAdvancedFilter(trades);
   currencyMeta.rate     = currencyHook.rate;
   currencyMeta.convert  = currencyHook.convert;
@@ -158,6 +165,13 @@ export default function TradingJournal() {
 
   function handleUpdateCaptions(tradeId, captions) {
     tradeHook.updateTrade?.(tradeId, { screenshotCaptions: captions });
+  }
+
+  const [replayTrade, setReplayTrade] = useState(null);
+
+  function handleReplay(trade) {
+    setReplayTrade(trade);
+    setActiveTab("replay");
   }
 
   function handleShareTrade(trade) {
@@ -284,6 +298,8 @@ export default function TradingJournal() {
                 currencyMeta={currencyMeta}
                 trades={trades} stats={stats} settings={settings}
                 onShareTrade={handleShareTrade}
+                onReplayTrade={handleReplayTrade}
+                onReplay={handleReplay}
               />
               <Suspense fallback={null}>
                 <AdvancedFilterPanel
@@ -341,7 +357,7 @@ export default function TradingJournal() {
             )}
 
             {activeTab === "replay" && (
-              <TradeReplay trades={trades} currencyMeta={currencyMeta} theme={theme} />
+              <TradeReplay trades={trades} currencyMeta={currencyMeta} theme={theme} initialTrade={replayTrade} />
             )}
 
             {activeTab === "share" && (
@@ -353,7 +369,7 @@ export default function TradingJournal() {
             )}
 
             {activeTab === "ai" && (
-              <AIAdvisor aiHook={aiHook} theme={theme} />
+              <AIAdvisor aiHook={aiHook} trades={trades} playbookSetups={playbookHook.setups} theme={theme} />
             )}
 
             {activeTab === "portfolio" && (
@@ -379,7 +395,7 @@ export default function TradingJournal() {
             )}
 
             {activeTab === "plan" && (
-              <TradingPlan planHook={planHook} theme={theme} />
+              <TradingPlan planHook={planHook} goalHook={goalHook} theme={theme} />
             )}
 
             {activeTab === "backtest" && (
@@ -388,6 +404,14 @@ export default function TradingJournal() {
 
             {activeTab === "broker" && (
               <BrokerComparison brokerHook={brokerHook} theme={theme} />
+            )}
+
+            {activeTab === "correlation" && (
+              <CorrelationAnalysis trades={trades} currencyMeta={currencyMeta} theme={theme} />
+            )}
+
+            {activeTab === "heatmap" && (
+              <HeatmapPage trades={trades} currencyMeta={currencyMeta} theme={theme} />
             )}
 
             {activeTab === "scanner" && (
@@ -411,6 +435,7 @@ export default function TradingJournal() {
                 <Settings
                   settings={settings} onUpdate={updateSettings} onReset={resetSettings}
                   currencyMeta={currencyMeta} stats={stats} theme={theme}
+                  alertsHook={alertsHook} riskStatus={riskStatus}
                 />
                 <SettingsStatus
                   isConfigured={supabaseHook.isConfigured} syncing={supabaseHook.syncing}

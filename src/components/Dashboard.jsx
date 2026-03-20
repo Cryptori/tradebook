@@ -3,6 +3,7 @@ import { formatCurrency, formatPct } from "../utils/formatters";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import TargetTracker from "./TargetTracker";
 import StreakWidget from "./StreakWidget";
+import DailyQuote from "./DailyQuote";
 import { WIDGET_SIZES } from "../hooks/useDashboardLayout";
 import { calcAllAdvancedStats } from "../utils/advancedStats";
 import {

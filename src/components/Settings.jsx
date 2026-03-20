@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { CURRENCIES, DEFAULT_SETTINGS } from "../hooks/useSettings";
 import RiskRulesPanel from "./RiskRulesPanel";
+import AlertsPanel from "./AlertsPanel";
 import { formatCurrency, formatPct } from "../utils/formatters";
 
 function ProgressBar({ value, color, theme: t }) {
@@ -13,7 +14,7 @@ function ProgressBar({ value, color, theme: t }) {
   );
 }
 
-export default function Settings({ settings, onUpdate, onReset, currencyMeta, stats, theme }) {
+export default function Settings({ settings, onUpdate, onReset, currencyMeta, stats, theme, alertsHook, riskStatus }) {
   const t = theme;
   const { isMobile } = useBreakpoint();
   const [draft, setDraft] = useState({ ...settings });
@@ -168,6 +169,13 @@ export default function Settings({ settings, onUpdate, onReset, currencyMeta, st
       {/* Supabase status slot — rendered by parent if needed */}
       <div id="supabase-status-slot" />
 
+      {/* Alerts & Reminders */}
+      {alertsHook && (
+        <div style={{ marginTop: 20 }}>
+          <AlertsPanel alertsHook={alertsHook} theme={t} />
+        </div>
+      )}
+
       {/* Actions */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 20 }}>
         <button className="btn-danger" onClick={handleReset}>↺ Reset Default</button>
@@ -202,6 +210,7 @@ export function SupabaseStatus({ isConfigured, syncing, syncError, lastSynced, t
           <div style={{ fontSize: 10, color: t.textDim, marginTop: 2 }}>Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file</div>
         )}
       </div>
+
     </div>
   );
 }

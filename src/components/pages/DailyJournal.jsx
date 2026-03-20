@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import PsychologyTracker from "../PsychologyTracker";
+import DailyQuote from "../DailyQuote";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { MARKET_BIAS, JOURNAL_MOODS } from "../../hooks/useDailyJournal";
 

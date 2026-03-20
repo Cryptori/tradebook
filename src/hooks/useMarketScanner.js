@@ -32,13 +32,10 @@ function getCurrentSession() {
 async function fetchPrice(symbol) {
   const s = symbol.replace("/", "").toUpperCase();
   try {
-    // Crypto
-    const cryptoMap = { BTCUSD: "bitcoin", ETHUSD: "ethereum", XRPUSD: "ripple", SOLUSD: "solana" };
-    if (cryptoMap[s]) {
-      const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${cryptoMap[s]}&vs_currencies=usd&include_24hr_change=true`);
-      const d = await r.json();
-      const coin = d[cryptoMap[s]];
-      if (coin) return { price: coin.usd, change24h: coin.usd_24h_change };
+    // Crypto - skip live price (API often blocked)
+    const cryptoSymbols = ["BTCUSD","ETHUSD","XRPUSD","SOLUSD","ADAUSD","BNBUSD"];
+    if (cryptoSymbols.includes(s)) {
+      return null; // Crypto prices require API key or proxy
     }
 
     // Forex via Frankfurter (free, no key needed)

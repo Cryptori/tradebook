@@ -14,6 +14,7 @@ export const DEFAULT_WIDGETS = [
   { id: "gamif",     label: "Trader Profile",    icon: "🏆", size: "medium", visible: true,  order: 6  },
   { id: "recent",    label: "Recent Trades",     icon: "📋", size: "large",  visible: true,  order: 7  },
   { id: "adv_stats", label: "Advanced Stats",    icon: "🔬", size: "large",  visible: false, order: 8  },
+  { id: "quote",     label: "Quote of the Day",  icon: "💬", size: "medium", visible: true,  order: 10 },
   { id: "scanner",   label: "Watchlist",         icon: "📡", size: "medium", visible: false, order: 9  },
   { id: "calendar",  label: "Eco Calendar",      icon: "📰", size: "medium", visible: false, order: 10 },
 ];

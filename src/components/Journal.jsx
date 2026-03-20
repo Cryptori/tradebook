@@ -23,7 +23,7 @@ export default function Journal({
   filteredTrades, filterMarket, setFilterMarket,
   dateFrom, dateTo, onFromChange, onToChange, onClearDates,
   onAdd, onEdit, onDelete, onImport, theme, currencyMeta,
-  trades, stats, settings, onShareTrade,
+  trades, stats, settings, onShareTrade, onReplay,
 }) {
   const t       = theme;
   const fileRef = useRef(null);

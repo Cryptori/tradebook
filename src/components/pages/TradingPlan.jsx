@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
+import GoalTrackerPanel from "../GoalTrackerPanel";
 import { formatCurrency } from "../../utils/formatters";
 import { SESSIONS, PLAN_MARKETS, getWeekEnd } from "../../hooks/useTradingPlan";
 
@@ -272,7 +273,7 @@ function PlanDetail({ plan, weekReview, weekTrades, onEdit, onDelete, onReview, 
 }
 
 // ── Main TradingPlan Page ────────────────────────────────────────
-export default function TradingPlan({ planHook, theme }) {
+export default function TradingPlan({ planHook, goalHook, theme }) {
   const t = theme;
   const { isMobile } = useBreakpoint();
   const [showReview, setShowReview] = useState(false);
@@ -363,6 +364,10 @@ export default function TradingPlan({ planHook, theme }) {
           plan={reviewTarget} weekReview={weekReview} sym={sym} theme={t}
           onSave={saveReview} onClose={() => { setShowReview(false); setReviewTarget(null); }}
         />
+      )}
+      {/* Goal Tracker */}
+      {goalHook && (
+        <GoalTrackerPanel goalHook={goalHook} theme={t} />
       )}
     </div>
   );
