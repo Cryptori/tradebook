@@ -22,7 +22,7 @@ const TAB_GROUPS = [
   {
     label: "Tools",
     icon: "⚡",
-    tabs: ["risk", "calendar-eco", "broker", "gallery", "share"],
+    tabs: ["risk", "calendar-eco", "broker", "gallery", "scanner", "share"],
   },
   {
     label: "Growth",
@@ -73,6 +73,7 @@ const TAB_ICONS = {
   backtest:      "◐",
   broker:        "◈",
   gallery:       "🖼",
+  scanner:       "📡",
   "screenshot-gallery": "🖼",
   risk:          "⊖",
   settings:      "◎",

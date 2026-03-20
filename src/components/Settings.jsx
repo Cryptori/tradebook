@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useBreakpoint } from "../hooks/useBreakpoint";
 import { CURRENCIES, DEFAULT_SETTINGS } from "../hooks/useSettings";
+import RiskRulesPanel from "./RiskRulesPanel";
 import { formatCurrency, formatPct } from "../utils/formatters";
 
 function ProgressBar({ value, color, theme: t }) {
@@ -82,7 +83,7 @@ export default function Settings({ settings, onUpdate, onReset, currencyMeta, st
             <div>
               <label>Mata Uang</label>
               <select value={draft.currency} onChange={e => set("currency", e.target.value)}>
-                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} — {c.label} ({c.code})</option>)}
+                {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.symbol} — {c.name} ({c.code})</option>)}
               </select>
             </div>
           </div>

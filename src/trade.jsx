@@ -14,6 +14,11 @@ import { usePortfolio }            from "./hooks/usePortfolio";
 import { useEconomicCalendar }      from "./hooks/useEconomicCalendar";
 import { useGamification }          from "./hooks/useGamification";
 import { useStreak }                from "./hooks/useStreak";
+import { useMarketScanner }         from "./hooks/useMarketScanner";
+import { useDashboardLayout }       from "./hooks/useDashboardLayout";
+import { useCurrency }              from "./hooks/useCurrency";
+import { useRiskRules }             from "./hooks/useRiskRules";
+import { useAdvancedFilter }        from "./hooks/useAdvancedFilter";
 import { useTradingPlan }           from "./hooks/useTradingPlan";
 import { useBacktest }              from "./hooks/useBacktest";
 import { useBroker }                from "./hooks/useBroker";
@@ -55,8 +60,10 @@ const TradingPlan       = lazy(() => import("./components/pages/TradingPlan"));
 const BacktestJournal   = lazy(() => import("./components/pages/BacktestJournal"));
 const BrokerComparison     = lazy(() => import("./components/pages/BrokerComparison"));
 const ScreenshotGallery   = lazy(() => import("./components/pages/ScreenshotGallery"));
+const MarketScanner         = lazy(() => import("./components/pages/MarketScanner"));
+const AdvancedFilterPanel   = lazy(() => import("./components/AdvancedFilterPanel"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "gallery", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "gallery", "scanner", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -124,6 +131,14 @@ export default function TradingJournal() {
   const calendarHook     = useEconomicCalendar(trades);
   const gamificationHook = useGamification({ trades, stats, journalEntries: dailyJournalHook.entries, settings });
   const streakHook       = useStreak({ trades, journalEntries: dailyJournalHook.entries, settings });
+  const scannerHook      = useMarketScanner(trades);
+  const layoutHook       = useDashboardLayout();
+  const currencyHook     = useCurrency(settings);
+  const riskStatus       = useRiskRules(trades, settings);
+  const filterHook       = useAdvancedFilter(trades);
+  currencyMeta.rate     = currencyHook.rate;
+  currencyMeta.convert  = currencyHook.convert;
+  currencyMeta.formatFn = currencyHook.format;
   const planHook         = useTradingPlan(trades, stats, settings, currencyMeta);
   const backtestHook     = useBacktest(trades, playbookHook.setups);
   const brokerHook       = useBroker(trades);
@@ -137,6 +152,10 @@ export default function TradingJournal() {
   usePageTitle(activeTab);
 
   // Share trade handler — navigate to share tab
+  function handleBulkTag(tradeId, updates) {
+    tradeHook.updateTrade?.(tradeId, updates);
+  }
+
   function handleUpdateCaptions(tradeId, captions) {
     tradeHook.updateTrade?.(tradeId, { screenshotCaptions: captions });
   }
@@ -213,6 +232,24 @@ export default function TradingJournal() {
         }
       />
 
+      {/* Risk lock banner */}
+      {riskStatus.locked && (
+        <div style={{ background: "rgba(239,68,68,0.1)", borderBottom: "1px solid rgba(239,68,68,0.3)", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>🚫</span>
+          <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 500 }}>
+            {riskStatus.warnings[0]?.msg || "Risk limit tercapai — trading diblokir hari ini"}
+          </span>
+        </div>
+      )}
+      {!riskStatus.locked && riskStatus.warnings.length > 0 && (
+        <div style={{ background: "rgba(245,158,11,0.08)", borderBottom: "1px solid rgba(245,158,11,0.2)", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>⚠️</span>
+          <span style={{ fontSize: 12, color: "#f59e0b" }}>
+            {riskStatus.warnings[0]?.msg}
+          </span>
+        </div>
+      )}
+
       <div className="page-wrapper">
         <ErrorBoundary theme={theme}>
           <Suspense fallback={<TabFallback tab={activeTab} />}>
@@ -222,6 +259,7 @@ export default function TradingJournal() {
               <Dashboard
                 gamificationHook={gamificationHook}
                 streakHook={streakHook}
+                layoutHook={layoutHook}
                 stats={stats} equityCurve={equityCurve} monthlyPnl={monthlyPnl}
                 marketBreakdown={marketBreakdown} settings={settings}
                 currencyMeta={currencyMeta} theme={theme}
@@ -233,17 +271,28 @@ export default function TradingJournal() {
             )}
 
             {activeTab === "journal" && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 16, alignItems: "start" }}>
               <Journal
-                filteredTrades={filteredTrades} filterMarket={filterMarket}
-                setFilterMarket={setFilterMarket} dateFrom={dateFrom} dateTo={dateTo}
-                onFromChange={setDateFrom} onToChange={setDateTo}
-                onClearDates={() => { setDateFrom(""); setDateTo(""); }}
+                filteredTrades={filterHook.filtered} filterMarket={filterHook.filter.market}
+                setFilterMarket={v => filterHook.setField("market", v)}
+                dateFrom={filterHook.filter.dateFrom} dateTo={filterHook.filter.dateTo}
+                onFromChange={v => filterHook.setField("dateFrom", v)}
+                onToChange={v => filterHook.setField("dateTo", v)}
+                onClearDates={() => { filterHook.setField("dateFrom", ""); filterHook.setField("dateTo", ""); }}
                 onAdd={openAddForm} onEdit={openEditForm}
                 onDelete={handleDelete} onImport={handleImport} theme={theme}
                 currencyMeta={currencyMeta}
                 trades={trades} stats={stats} settings={settings}
                 onShareTrade={handleShareTrade}
               />
+              <Suspense fallback={null}>
+                <AdvancedFilterPanel
+                  filterHook={filterHook}
+                  onBulkTag={handleBulkTag}
+                  theme={theme}
+                />
+              </Suspense>
+              </div>
             )}
 
             {activeTab === "analytics" && (
@@ -286,6 +335,7 @@ export default function TradingJournal() {
                 error={dailyJournalHook.error}
                 onSave={dailyJournalHook.saveEntry}
                 onDelete={dailyJournalHook.deleteEntry}
+                trades={trades}
                 theme={theme}
               />
             )}
@@ -338,6 +388,10 @@ export default function TradingJournal() {
 
             {activeTab === "broker" && (
               <BrokerComparison brokerHook={brokerHook} theme={theme} />
+            )}
+
+            {activeTab === "scanner" && (
+              <MarketScanner scannerHook={scannerHook} theme={theme} />
             )}
 
             {activeTab === "gallery" && (

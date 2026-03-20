@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import PsychologyTracker from "../PsychologyTracker";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { MARKET_BIAS, JOURNAL_MOODS } from "../../hooks/useDailyJournal";
 
@@ -233,7 +234,7 @@ const EMPTY_FORM = {
   rating:      3,
 };
 
-export default function DailyJournal({ entries, loading, error, onSave, onDelete, theme }) {
+export default function DailyJournal({ entries, loading, error, onSave, onDelete, theme, trades }) {
   const t = theme;
   const { isMobile } = useBreakpoint();
 
@@ -383,6 +384,14 @@ export default function DailyJournal({ entries, loading, error, onSave, onDelete
           </div>
         )
       )}
+
+
+      {/* ── Psychology Tracker ──────────────────────────────── */}
+      <PsychologyTracker
+        trades={trades || []}
+        journalEntries={entries || []}
+        theme={t}
+      />
     </div>
   );
 }

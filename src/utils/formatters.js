@@ -4,8 +4,9 @@
  * @param {boolean} compact - singkat (1.2k, 3.4M)
  * @param {string} symbol - currency symbol
  */
-export function formatCurrency(v, compact = false, symbol = "$") {
+export function formatCurrency(v, compact = false, symbol = "$", rate = 1) {
   if (v === undefined || v === null || isNaN(v)) return `${symbol}0.00`;
+  if (rate && rate !== 1) v = v * rate;
   const abs = Math.abs(v);
   const neg = v < 0;
 
