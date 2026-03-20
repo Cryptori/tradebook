@@ -134,7 +134,7 @@ export default function Insights({ trades, currencyMeta, theme }) {
     );
   };
 
-  const maxDow = Math.max(...dowStats.map(x => Math.abs(x.pnl)), 1);
+  const maxDow = dowStats.length > 0 ? Math.max(...dowStats.map(x => Math.abs(x.pnl)), 1) : 1;
 
   return (
     <div>

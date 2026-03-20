@@ -259,7 +259,7 @@ export default function Dashboard({
           {marketBreakdown?.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {marketBreakdown.slice(0, 5).map(m => {
-                const maxPnl = Math.max(...marketBreakdown.map(x => Math.abs(x.pnl)), 1);
+                const maxPnl = marketBreakdown?.length > 0 ? Math.max(...marketBreakdown.map(x => Math.abs(x.pnl)), 1) : 1;
                 return (
                   <div key={m.market} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <div style={{ width: 70, fontSize: 11, color: t.textMuted, flexShrink: 0 }}>{m.market}</div>

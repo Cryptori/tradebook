@@ -17,7 +17,7 @@ export default function BrokerImportModal({ onImport, existingTrades, theme: t, 
       const text = await file.text();
       const res  = importBrokerCSV(text, existingTrades || []);
       setResult(res);
-      setSelected(new Set(res.trades.map(t => t.id)));
+      setSelected(new Set(res.trades.map(tr => tr.id)));
       setStep("preview");
     } catch (err) {
       setError("Gagal membaca file: " + err.message);
@@ -37,7 +37,7 @@ export default function BrokerImportModal({ onImport, existingTrades, theme: t, 
   }
 
   function handleImport() {
-    const toImport = result.trades.filter(t => selected.has(t.id));
+    const toImport = result.trades.filter(tr => selected.has(tr.id));
     onImport(toImport);
     setStep("done");
   }
@@ -52,7 +52,7 @@ export default function BrokerImportModal({ onImport, existingTrades, theme: t, 
 
   function toggleAll() {
     if (selected.size === result.trades.length) setSelected(new Set());
-    else setSelected(new Set(result.trades.map(t => t.id)));
+    else setSelected(new Set(result.trades.map(tr => tr.id)));
   }
 
   const sym = "$";

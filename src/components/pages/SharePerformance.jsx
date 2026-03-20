@@ -124,7 +124,7 @@ function PerformanceCard({ stats, trades, settings, currencyMeta, username, peri
           <div style={{ fontSize: 9, color: "#4a5568", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Monthly P&L</div>
           <div style={{ display: "flex", gap: 4, alignItems: "flex-end", height: 48 }}>
             {months.map(m => {
-              const max = Math.max(...months.map(x => Math.abs(x.pnl)), 1);
+              const max = months.length > 0 ? Math.max(...months.map(x => Math.abs(x.pnl)), 1) : 1;
               const h   = Math.max(4, (Math.abs(m.pnl) / max) * 44);
               return (
                 <div key={m.month} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>

@@ -34,7 +34,7 @@ export function useStreak({ trades, journalEntries, settings }) {
 
   // Active trading days (has at least 1 trade)
   const tradingDays = useMemo(() => {
-    return new Set((trades || []).map(t => t.date));
+    return new Set((trades || []).map(tr => tr.date));
   }, [trades]);
 
   // Active journal days

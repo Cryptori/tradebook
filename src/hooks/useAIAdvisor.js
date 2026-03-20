@@ -9,23 +9,23 @@ export function buildAIContext({ trades, stats, settings, currencyMeta, journal,
   const recentTrades = [...(trades ?? [])]
     .sort((a, b) => new Date(b.date) - new Date(a.date))
     .slice(0, 50)
-    .map(t => ({
-      date:      t.date,
-      pair:      t.pair,
-      market:    t.market,
-      side:      t.side,
-      entry:     t.entry,
-      exit:      t.exit,
-      sl:        t.stopLoss,
-      tp:        t.takeProfit,
-      size:      t.size,
-      pnl:       t.pnl,
-      rr:        t.rr,
-      strategy:  t.strategy,
-      emotion:   t.emotion,
-      session:   t.session,
-      notes:     t.notes,
-      tags:      t.tags,
+    .map(tr => ({
+      date:      tr.date,
+      pair:      tr.pair,
+      market:    tr.market,
+      side:      tr.side,
+      entry:     tr.entry,
+      exit:      tr.exit,
+      sl:        tr.stopLoss,
+      tp:        tr.takeProfit,
+      size:      tr.size,
+      pnl:       tr.pnl,
+      rr:        tr.rr,
+      strategy:  tr.strategy,
+      emotion:   tr.emotion,
+      session:   tr.session,
+      notes:     tr.notes,
+      tags:      tr.tags,
     }));
 
   // Ringkas journal — max 14 entri terbaru
@@ -115,9 +115,9 @@ export function buildWeeklyPrompt(context) {
   const weekAgo  = new Date(now - 7 * 24 * 60 * 60 * 1000);
   const weekStr  = weekAgo.toISOString().split("T")[0];
 
-  const weekTrades = context.recentTrades.filter(t => t.date >= weekStr);
-  const weekPnl    = weekTrades.reduce((s, t) => s + t.pnl, 0);
-  const weekWins   = weekTrades.filter(t => t.pnl >= 0).length;
+  const weekTrades = context.recentTrades.filter(tr => tr.date >= weekStr);
+  const weekPnl    = weekTrades.reduce((s, t) => s + tr.pnl, 0);
+  const weekWins   = weekTrades.filter(tr => tr.pnl >= 0).length;
 
   return `Buatkan laporan analisis mingguan trading saya untuk periode 7 hari terakhir.
 

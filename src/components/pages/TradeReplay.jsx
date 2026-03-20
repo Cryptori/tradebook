@@ -153,7 +153,7 @@ export default function TradeReplay({ trades, currencyMeta, theme }) {
     return s;
   }, [trades, filterSide, search]);
 
-  const selected = trades.find(t => t.id === selectedId) ?? filtered[0] ?? null;
+  const selected = trades.find(tr => tr.id === selectedId) ?? filtered[0] ?? null;
   const tvSymbol = selected ? toTVSymbol(selected.pair, selected.market) : null;
 
   return (

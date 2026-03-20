@@ -22,7 +22,7 @@ const TAB_GROUPS = [
   {
     label: "Tools",
     icon: "⚡",
-    tabs: ["risk", "calendar-eco", "broker", "share"],
+    tabs: ["risk", "calendar-eco", "broker", "gallery", "share"],
   },
   {
     label: "Growth",
@@ -49,6 +49,7 @@ const TAB_LABELS = {
   plan:          "Trading Plan",
   backtest:      "Backtest",
   broker:        "Broker",
+  gallery:       "Gallery",
   risk:          "Risk Calc",
   settings:      "Settings",
 };
@@ -71,6 +72,8 @@ const TAB_ICONS = {
   plan:          "◎",
   backtest:      "◐",
   broker:        "◈",
+  gallery:       "🖼",
+  "screenshot-gallery": "🖼",
   risk:          "⊖",
   settings:      "◎",
 };

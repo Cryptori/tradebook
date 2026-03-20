@@ -91,7 +91,7 @@ function StreakCalendar({ calendarData, theme: t }) {
 
 // ── Monthly bars ──────────────────────────────────────────────────
 function MonthlyBars({ monthlyData, theme: t }) {
-  const max = Math.max(...monthlyData.map(m => m.total), 1);
+  const max = monthlyData.length > 0 ? Math.max(...monthlyData.map(m => m.total), 1) : 1;
   return (
     <div style={{ display: "flex", gap: 6, alignItems: "flex-end", height: 80 }}>
       {monthlyData.map(m => {

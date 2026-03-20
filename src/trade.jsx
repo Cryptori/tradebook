@@ -53,9 +53,10 @@ const EconomicCalendar  = lazy(() => import("./components/pages/EconomicCalendar
 const Gamification      = lazy(() => import("./components/pages/Gamification"));
 const TradingPlan       = lazy(() => import("./components/pages/TradingPlan"));
 const BacktestJournal   = lazy(() => import("./components/pages/BacktestJournal"));
-const BrokerComparison  = lazy(() => import("./components/pages/BrokerComparison"));
+const BrokerComparison     = lazy(() => import("./components/pages/BrokerComparison"));
+const ScreenshotGallery   = lazy(() => import("./components/pages/ScreenshotGallery"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "gallery", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -136,6 +137,10 @@ export default function TradingJournal() {
   usePageTitle(activeTab);
 
   // Share trade handler — navigate to share tab
+  function handleUpdateCaptions(tradeId, captions) {
+    tradeHook.updateTrade?.(tradeId, { screenshotCaptions: captions });
+  }
+
   function handleShareTrade(trade) {
     setActiveTab("share");
     // Store selected trade in sessionStorage for SharePerformance to pick up
@@ -333,6 +338,14 @@ export default function TradingJournal() {
 
             {activeTab === "broker" && (
               <BrokerComparison brokerHook={brokerHook} theme={theme} />
+            )}
+
+            {activeTab === "gallery" && (
+              <ScreenshotGallery
+                trades={trades}
+                onOpenTrade={(trade) => { /* open detail modal */ }}
+                theme={theme}
+              />
             )}
 
             {activeTab === "risk" && (

@@ -63,8 +63,8 @@ function calcPeriodStats(trades) {
     avgLoss: losses.length ? -grossLoss  / losses.length : 0,
     avgRR, maxWinStreak: maxWin, maxLossStreak: maxLoss,
     topPair, topStrategy, topEmotion,
-    bestTrade:  Math.max(...trades.map(tr => tr.pnl)),
-    worstTrade: Math.min(...trades.map(tr => tr.pnl)),
+    bestTrade:  trades.length > 0 ? Math.max(...trades.map(tr => tr.pnl)) : 0,
+    worstTrade: trades.length > 0 ? Math.min(...trades.map(tr => tr.pnl)) : 0,
   };
 }
 

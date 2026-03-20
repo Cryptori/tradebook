@@ -28,13 +28,13 @@ export default function GlobalSearch({ trades, onNavigate, currencyMeta, theme: 
     if (!query.trim()) return [];
     const q = query.toLowerCase();
     return trades
-      .filter(t =>
-        t.pair?.toLowerCase().includes(q) ||
-        t.strategy?.toLowerCase().includes(q) ||
-        t.notes?.toLowerCase().includes(q) ||
-        t.market?.toLowerCase().includes(q) ||
-        t.emotion?.toLowerCase().includes(q) ||
-        t.date?.includes(q)
+      .filter(tr =>
+        tr.pair?.toLowerCase().includes(q) ||
+        tr.strategy?.toLowerCase().includes(q) ||
+        tr.notes?.toLowerCase().includes(q) ||
+        tr.market?.toLowerCase().includes(q) ||
+        tr.emotion?.toLowerCase().includes(q) ||
+        tr.date?.includes(q)
       )
       .slice(0, 8);
   }, [query, trades]);
