@@ -1,4 +1,4 @@
-import { useState, Suspense, lazy } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import "./App.css";
 import { useTrades }        from "./hooks/useTrades";
 import { useSettings }      from "./hooks/useSettings";
@@ -20,6 +20,9 @@ import { useCurrency }              from "./hooks/useCurrency";
 import { useRiskRules }             from "./hooks/useRiskRules";
 import { useCustomAlerts }          from "./hooks/useCustomAlerts";
 import { useGoalTracker }           from "./hooks/useGoalTracker";
+import { useJournalTemplates }      from "./hooks/useJournalTemplates";
+import OnboardingWizard, { useOnboarding } from "./components/OnboardingWizard";
+import { ThemePicker } from "./components/ThemeSwitcher";
 import { useAdvancedFilter }        from "./hooks/useAdvancedFilter";
 import { useTradingPlan }           from "./hooks/useTradingPlan";
 import { useBacktest }              from "./hooks/useBacktest";
@@ -37,7 +40,6 @@ import { DashboardSkeleton, TableSkeleton, PageSkeleton, CardListSkeleton } from
 import GlobalSearch            from "./components/GlobalSearch";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { usePageTitle }         from "./hooks/usePageTitle";
-import Onboarding, { useOnboarding } from "./components/Onboarding";
 import { generatePdfReport }  from "./utils/pdfReport";
 
 // ── Lazy-loaded (only when tab is visited) ────────────────────────
@@ -65,10 +67,12 @@ const ScreenshotGallery   = lazy(() => import("./components/pages/ScreenshotGall
 const MarketScanner         = lazy(() => import("./components/pages/MarketScanner"));
 const AdvancedFilterPanel   = lazy(() => import("./components/AdvancedFilterPanel"));
 const HeatmapPage           = lazy(() => import("./components/pages/HeatmapPage"));
+const JournalTemplates        = lazy(() => import("./components/pages/JournalTemplates"));
+const AccountComparison     = lazy(() => import("./components/pages/AccountComparison"));
 const CorrelationAnalysis   = lazy(() => import("./components/pages/CorrelationAnalysis"));
 const TradeReplayModal      = lazy(() => import("./components/pages/TradeReplay"));
 
-const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "gallery", "scanner", "heatmap", "correlation", "risk", "settings"];
+const TABS = ["dashboard", "journal", "analytics", "calendar", "insights", "review", "playbook", "daily", "replay", "share", "ai", "portfolio", "calendar-eco", "achievements", "plan", "backtest", "broker", "gallery", "scanner", "heatmap", "correlation", "templates", "acct-compare", "risk", "settings"];
 
 // ── Tab-specific skeleton fallbacks ──────────────────────────────
 function TabFallback({ tab }) {
@@ -111,7 +115,7 @@ export default function TradingJournal() {
   const [activeTab,  setActiveTab]  = useState("dashboard");
   const [pdfMonth,   setPdfMonth]   = useState("");
 
-  const { theme, themeName, toggleTheme }                           = useTheme();
+  const { theme, themeName, toggleTheme, setThemeName }             = useTheme();
   const { settings, updateSettings, resetSettings, currencyMeta }   = useSettings();
   const authHook     = useAuth();
   const supabaseHook = useSupabase();
@@ -140,8 +144,31 @@ export default function TradingJournal() {
   const layoutHook       = useDashboardLayout();
   const currencyHook     = useCurrency(settings);
   const riskStatus       = useRiskRules(trades, settings);
+
+  // All trades grouped by account (for comparison)
+  const [allTradesByAccount, setAllTradesByAccount] = useState({});
+  useEffect(() => {
+    async function fetchAllAccountTrades() {
+      if (!accountsHook.accounts?.length) return;
+      const map = {};
+      for (const acc of accountsHook.accounts) {
+        if (acc.id === accountsHook.activeAccount?.id) {
+          map[acc.id] = trades;
+        } else {
+          try {
+            const { data } = await import("./lib/supabase").then(m => m.supabase.from("trades").select("*").eq("account_id", acc.id));
+            map[acc.id] = data || [];
+          } catch { map[acc.id] = []; }
+        }
+      }
+      setAllTradesByAccount(map);
+    }
+    fetchAllAccountTrades();
+  }, [accountsHook.accounts, accountsHook.activeAccount?.id, trades]);
   const alertsHook       = useCustomAlerts(trades, stats, settings);
   const goalHook         = useGoalTracker(trades, stats, settings);
+  const templateHook     = useJournalTemplates(trades, dailyJournalHook.entries);
+  const onboarding       = useOnboarding();
   const filterHook       = useAdvancedFilter(trades);
   currencyMeta.rate     = currencyHook.rate;
   currencyMeta.convert  = currencyHook.convert;
@@ -189,7 +216,6 @@ export default function TradingJournal() {
   aiHook.setContext(aiContext);
 
   // ── Onboarding
-  const onboarding = useOnboarding();
 
   // ── Keyboard shortcuts ────────────────────────────────────────
   useKeyboardShortcuts({
@@ -410,6 +436,20 @@ export default function TradingJournal() {
               <CorrelationAnalysis trades={trades} currencyMeta={currencyMeta} theme={theme} />
             )}
 
+            {activeTab === "templates" && (
+              <JournalTemplates templateHook={templateHook} theme={theme} />
+            )}
+
+            {activeTab === "acct-compare" && (
+              <AccountComparison
+                accounts={accountsHook.accounts}
+                allTradesByAccount={allTradesByAccount}
+                settings={settings}
+                currencyMeta={currencyMeta}
+                theme={theme}
+              />
+            )}
+
             {activeTab === "heatmap" && (
               <HeatmapPage trades={trades} currencyMeta={currencyMeta} theme={theme} />
             )}
@@ -436,6 +476,8 @@ export default function TradingJournal() {
                   settings={settings} onUpdate={updateSettings} onReset={resetSettings}
                   currencyMeta={currencyMeta} stats={stats} theme={theme}
                   alertsHook={alertsHook} riskStatus={riskStatus}
+                  onResetOnboarding={onboarding.reset}
+                  currentTheme={themeName} onSetTheme={setThemeName}
                 />
                 <SettingsStatus
                   isConfigured={supabaseHook.isConfigured} syncing={supabaseHook.syncing}
@@ -462,7 +504,13 @@ export default function TradingJournal() {
       <NotificationsContainer toasts={toasts} onDismiss={dismissToast} theme={theme} />
 
       {/* Onboarding */}
-      {onboarding.show && <Onboarding theme={theme} onDone={onboarding.done} />}
+      {onboarding.show && (
+        <OnboardingWizard
+          onComplete={onboarding.complete}
+          onSaveSettings={(form) => { updateSettings({ ...settings, ...form }); }}
+          theme={theme}
+        />
+      )}
     </div>
   );
 }

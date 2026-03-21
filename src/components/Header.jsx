@@ -17,12 +17,12 @@ const TAB_GROUPS = [
   {
     label: "Planning",
     icon: "🎯",
-    tabs: ["playbook", "daily", "plan", "portfolio"],
+    tabs: ["playbook", "daily", "plan", "portfolio", "templates"],
   },
   {
     label: "Tools",
     icon: "⚡",
-    tabs: ["risk", "calendar-eco", "broker", "gallery", "scanner", "heatmap", "correlation", "share"],
+    tabs: ["risk", "calendar-eco", "broker", "gallery", "scanner", "heatmap", "correlation", "acct-compare", "share"],
   },
   {
     label: "Growth",
@@ -75,6 +75,8 @@ const TAB_ICONS = {
   gallery:       "🖼",
   scanner:       "📡",
   heatmap:       "🔥",
+  templates:     "📋",
+  "acct-compare": "🏦",
   correlation:   "🔗",
   "screenshot-gallery": "🖼",
   risk:          "⊖",

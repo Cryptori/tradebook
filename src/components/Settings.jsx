@@ -3,6 +3,7 @@ import { useBreakpoint } from "../hooks/useBreakpoint";
 import { CURRENCIES, DEFAULT_SETTINGS } from "../hooks/useSettings";
 import RiskRulesPanel from "./RiskRulesPanel";
 import AlertsPanel from "./AlertsPanel";
+import { ThemePicker } from "./ThemeSwitcher";
 import { formatCurrency, formatPct } from "../utils/formatters";
 
 function ProgressBar({ value, color, theme: t }) {
@@ -14,7 +15,7 @@ function ProgressBar({ value, color, theme: t }) {
   );
 }
 
-export default function Settings({ settings, onUpdate, onReset, currencyMeta, stats, theme, alertsHook, riskStatus }) {
+export default function Settings({ settings, onUpdate, onReset, currencyMeta, stats, theme, alertsHook, riskStatus, onResetOnboarding, currentTheme, onSetTheme }) {
   const t = theme;
   const { isMobile } = useBreakpoint();
   const [draft, setDraft] = useState({ ...settings });
@@ -169,6 +170,13 @@ export default function Settings({ settings, onUpdate, onReset, currencyMeta, st
       {/* Supabase status slot — rendered by parent if needed */}
       <div id="supabase-status-slot" />
 
+      {/* Theme Picker */}
+      {onSetTheme && (
+        <div style={{ marginBottom: 20 }}>
+          <ThemePicker currentTheme={currentTheme} onSetTheme={onSetTheme} theme={t} />
+        </div>
+      )}
+
       {/* Alerts & Reminders */}
       {alertsHook && (
         <div style={{ marginTop: 20 }}>
@@ -178,7 +186,10 @@ export default function Settings({ settings, onUpdate, onReset, currencyMeta, st
 
       {/* Actions */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 20 }}>
-        <button className="btn-danger" onClick={handleReset}>↺ Reset Default</button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn-danger" onClick={handleReset}>↺ Reset Default</button>
+          {onResetOnboarding && <button className="btn-ghost" style={{ fontSize: 11 }} onClick={onResetOnboarding}>🎓 Onboarding</button>}
+        </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           {saved && <span style={{ fontSize: 12, color: "#00d4aa" }}>✓ Tersimpan!</span>}
           <button className="btn-primary" onClick={handleSave}>Simpan Settings</button>
