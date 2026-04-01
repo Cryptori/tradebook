@@ -90,12 +90,12 @@ function TabFallback({ tab }) {
 // ── Full-screen auth loading ──────────────────────────────────────
 function AuthLoading({ theme: t }) {
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-      <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 36, letterSpacing: 6, color: t.accent }}>TRADEBOOK</div>
+    <div style={{ minHeight: "100vh", background: "var(--bg)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
+      <div style={{ fontFamily: "var(--font-disp)", fontSize: 36, letterSpacing: 6, color: "var(--accent)" }}>TRADEBOOK</div>
       <div style={{ display: "flex", gap: 6 }}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{
-            width: 8, height: 8, borderRadius: "50%", background: t.accent,
+            width: 8, height: 8, borderRadius: "50%", background: "var(--accent)",
             animation: `dotBounce 1.2s ease-in-out ${i * 0.2}s infinite`,
           }} />
         ))}
@@ -243,40 +243,25 @@ export default function TradingJournal() {
   }
 
   return (
-    <div style={{ fontFamily: "'DM Mono', 'Courier New', monospace", background: theme.bg, minHeight: "100vh", color: theme.text }}>
+    <div style={{ fontFamily: "var(--font-mono), 'Courier New', monospace", background: theme.bg, minHeight: "100vh", color: theme.text }}>
 
       <Header
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onAddTrade={openAddForm}
+        onTab={setActiveTab}
+        accounts={accountsHook.accounts}
+        activeAccount={accountsHook.activeAccount}
+        onAccountChange={accountsHook.switchAccount}
+        authHook={authHook}
         themeName={themeName}
         onToggleTheme={toggleTheme}
-        theme={theme}
-        syncing={supabaseHook.syncing}
-        tabs={TABS}
-        user={authHook.user}
-        profile={authHook.profile}
-        onSignOut={authHook.signOut}
-        globalSearch={
-          <GlobalSearch trades={trades} onNavigate={setActiveTab} currencyMeta={currencyMeta} theme={theme} />
-        }
-        accountSwitcher={
-          <AccountSwitcher
-            accounts={accountsHook.accounts}
-            activeAccount={accountsHook.activeAccount}
-            onSwitch={accountsHook.switchAccount}
-            onAdd={accountsHook.addAccount}
-            onDelete={accountsHook.deleteAccount}
-            theme={theme}
-          />
-        }
       />
+      
 
       {/* Risk lock banner */}
       {riskStatus.locked && (
         <div style={{ background: "rgba(239,68,68,0.1)", borderBottom: "1px solid rgba(239,68,68,0.3)", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 16 }}>🚫</span>
-          <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 500 }}>
+          <span style={{ fontSize: 12, color: "var(--danger)", fontWeight: 500 }}>
             {riskStatus.warnings[0]?.msg || "Risk limit tercapai — trading diblokir hari ini"}
           </span>
         </div>
@@ -284,7 +269,7 @@ export default function TradingJournal() {
       {!riskStatus.locked && riskStatus.warnings.length > 0 && (
         <div style={{ background: "rgba(245,158,11,0.08)", borderBottom: "1px solid rgba(245,158,11,0.2)", padding: "10px 24px", display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 16 }}>⚠️</span>
-          <span style={{ fontSize: 12, color: "#f59e0b" }}>
+          <span style={{ fontSize: 12, color: "var(--warning)" }}>
             {riskStatus.warnings[0]?.msg}
           </span>
         </div>
@@ -313,18 +298,12 @@ export default function TradingJournal() {
             {activeTab === "journal" && (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 260px", gap: 16, alignItems: "start" }}>
               <Journal
-                filteredTrades={filterHook.filtered} filterMarket={filterHook.filter.market}
-                setFilterMarket={v => filterHook.setField("market", v)}
-                dateFrom={filterHook.filter.dateFrom} dateTo={filterHook.filter.dateTo}
-                onFromChange={v => filterHook.setField("dateFrom", v)}
-                onToChange={v => filterHook.setField("dateTo", v)}
-                onClearDates={() => { filterHook.setField("dateFrom", ""); filterHook.setField("dateTo", ""); }}
+                filterHook={filterHook}
                 onAdd={openAddForm} onEdit={openEditForm}
                 onDelete={handleDelete} onImport={handleImport} theme={theme}
                 currencyMeta={currencyMeta}
                 trades={trades} stats={stats} settings={settings}
                 onShareTrade={handleShareTrade}
-                onReplayTrade={handleReplayTrade}
                 onReplay={handleReplay}
               />
               <Suspense fallback={null}>
@@ -478,6 +457,7 @@ export default function TradingJournal() {
                   alertsHook={alertsHook} riskStatus={riskStatus}
                   onResetOnboarding={onboarding.reset}
                   currentTheme={themeName} onSetTheme={setThemeName}
+                  authHook={authHook}
                 />
                 <SettingsStatus
                   isConfigured={supabaseHook.isConfigured} syncing={supabaseHook.syncing}

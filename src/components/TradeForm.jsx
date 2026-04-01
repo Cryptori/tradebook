@@ -3,6 +3,7 @@ import { useBreakpoint } from "../hooks/useBreakpoint";
 import { MARKETS, SIDES, SESSIONS, STRATEGIES, EMOTIONS } from "../constants";
 import TagSelector from "./TagSelector";
 
+// ── Calculations ──────────────────────────────────────────────────
 function calcPnL(form) {
   const entry = parseFloat(form.entry);
   const exit  = parseFloat(form.exit);
@@ -23,47 +24,51 @@ function calcRR(form) {
   return (reward / risk).toFixed(2);
 }
 
-// ── Section header ────────────────────────────────────────────────
+// ── Section divider ───────────────────────────────────────────────
 function SectionLabel({ children }) {
   return (
     <div style={{
-      fontSize: 9, textTransform: "uppercase", letterSpacing: "0.18em",
-      color: "var(--accent)", fontWeight: 600, marginBottom: 12,
-      display: "flex", alignItems: "center", gap: 8,
+      display: "flex", alignItems: "center", gap: 10,
+      marginBottom: 12, marginTop: 4,
     }}>
-      <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, var(--accent)30, transparent)" }} />
-      {children}
-      <div style={{ flex: 1, height: 1, background: "linear-gradient(270deg, var(--accent)30, transparent)" }} />
+      <div style={{ flex: 1, height: 1, background: "var(--border)" }}/>
+      <span style={{
+        fontSize: "var(--fs-2xs)", color: "var(--accent)",
+        textTransform: "uppercase", letterSpacing: "0.18em", fontWeight: 600,
+        whiteSpace: "nowrap",
+      }}>
+        {children}
+      </span>
+      <div style={{ flex: 1, height: 1, background: "var(--border)" }}/>
     </div>
   );
 }
 
 // ── Screenshot grid ───────────────────────────────────────────────
-function ScreenshotGrid({ urls, onRemove, theme: t }) {
+function ScreenshotGrid({ urls, onRemove }) {
   if (!urls?.length) return null;
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8, marginTop: 8 }}>
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 8, marginTop: 8 }}>
       {urls.map((url, i) => (
-        <div key={i} style={{ position: "relative", borderRadius: 8, overflow: "hidden", border: `1px solid ${t.border}` }}>
+        <div key={i} style={{ position: "relative", borderRadius: "var(--r-md)", overflow: "hidden", border: "1px solid var(--border)" }}>
           <img src={url} alt={`ss-${i}`}
-            style={{ width: "100%", height: 96, objectFit: "cover", display: "block" }}
-            onError={e => { e.target.style.display = "none"; }} />
-          <button onClick={() => onRemove(i)}
-            style={{
-              position: "absolute", top: 4, right: 4,
-              background: "rgba(0,0,0,0.7)", border: "none",
-              color: "#fff", borderRadius: "50%", width: 20, height: 20,
-              cursor: "pointer", fontSize: 10,
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}>✕</button>
+            style={{ width: "100%", height: 88, objectFit: "cover", display: "block" }}
+            onError={e => { e.target.style.display = "none"; }}/>
+          <button onClick={() => onRemove(i)} style={{
+            position: "absolute", top: 4, right: 4,
+            background: "rgba(0,0,0,0.7)", border: "none",
+            color: "#fff", borderRadius: "50%", width: 20, height: 20,
+            cursor: "pointer", fontSize: 10,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>✕</button>
         </div>
       ))}
     </div>
   );
 }
 
+// ── Main TradeForm ────────────────────────────────────────────────
 export default function TradeForm({ form, setForm, editingTrade, onSubmit, onClose, theme, supabase }) {
-  const t       = theme;
   const fileRef = useRef(null);
   const { isMobile } = useBreakpoint();
   const [uploading, setUploading] = useState(false);
@@ -71,6 +76,7 @@ export default function TradeForm({ form, setForm, editingTrade, onSubmit, onClo
 
   const set = useCallback((key, val) => setForm(p => ({ ...p, [key]: val })), [setForm]);
 
+  // Auto-calc P&L and R:R
   useEffect(() => {
     const pnl = calcPnL(form);
     const rr  = calcRR(form);
@@ -121,205 +127,240 @@ export default function TradeForm({ form, setForm, editingTrade, onSubmit, onClo
   }
 
   const screenshots = Array.isArray(form.screenshots) ? form.screenshots : (form.screenshotUrl ? [form.screenshotUrl] : []);
-  const pnlVal = parseFloat(form.pnl);
-  const rrVal  = parseFloat(form.rr);
-  const pnlColor = !isNaN(pnlVal) && pnlVal >= 0 ? "#00c896" : "#ef4444";
-  const rrColor  = !isNaN(rrVal)  && rrVal  >= 0 ? "#00c896" : "#ef4444";
+  const pnlVal   = parseFloat(form.pnl);
+  const rrVal    = parseFloat(form.rr);
+  const pnlColor = !isNaN(pnlVal) && pnlVal >= 0 ? "var(--success)" : "var(--danger)";
+  const rrColor  = !isNaN(rrVal)  && rrVal  >= 1 ? "var(--success)" : "var(--warning)";
 
-  const inp = (key, placeholder = "0.00", readOnly = false) => (
-    <input
-      type="number" step="any" value={form[key]}
-      onChange={e => set(key, e.target.value)}
-      placeholder={placeholder}
-      readOnly={readOnly}
-      style={{
-        background: t.bgInput, border: `1px solid ${t.border}`,
-        color: t.text, borderRadius: 8, width: "100%",
-        padding: "9px 12px", fontFamily: "DM Mono, monospace", fontSize: 13,
-      }}
-    />
-  );
+  // Shared input style
+  const inputStyle = {
+    background: "var(--bg-input)",
+    border: "1px solid var(--border)",
+    color: "var(--text)",
+    borderRadius: "var(--r-md)",
+    width: "100%",
+    padding: "8px 10px",
+    fontSize: "var(--fs-base)",
+    fontFamily: "var(--font-ui)",
+  };
+
+  const monoInputStyle = { ...inputStyle, fontFamily: "var(--font-mono)", fontSize: "var(--fs-base)" };
+
+  function NumInput({ k, placeholder = "0.00", readOnly = false }) {
+    return (
+      <input
+        type="number" step="any"
+        value={form[k]}
+        onChange={e => set(k, e.target.value)}
+        placeholder={placeholder}
+        readOnly={readOnly}
+        style={monoInputStyle}
+      />
+    );
+  }
 
   return (
-    <div className="form-modal" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="form-card" style={{ background: t.bgCard, borderColor: t.border, maxWidth: 800, maxHeight: "92vh", overflowY: "auto" }}>
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 300,
+      background: "var(--bg-overlay)",
+      backdropFilter: "blur(8px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 16,
+    }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <div style={{
+        background: "var(--bg-card)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--r-xl)",
+        padding: isMobile ? 16 : 24,
+        width: "100%",
+        maxWidth: 780,
+        maxHeight: "92vh",
+        overflowY: "auto",
+        boxShadow: "var(--shadow-lg)",
+      }}>
 
-        {/* ── Header ──────────────────────────────────────────── */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 3, color: t.text, lineHeight: 1 }}>
+            <h2 style={{ fontFamily: "var(--font-disp)", fontSize: 20, letterSpacing: 3, color: "var(--text)", lineHeight: 1, fontWeight: 400 }}>
               {editingTrade ? "EDIT TRADE" : "LOG NEW TRADE"}
-            </div>
-            <div style={{ fontSize: 11, color: t.textDim, marginTop: 4 }}>
+            </h2>
+            <p style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)", marginTop: 4 }}>
               P&L dan R:R dihitung otomatis
-            </div>
+            </p>
           </div>
-          <button onClick={onClose}
-            style={{ background: t.bgSubtle, border: `1px solid ${t.border}`, color: t.textDim, cursor: "pointer", borderRadius: 7, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>
-            ✕
-          </button>
+          <button onClick={onClose} className="btn-icon">✕</button>
         </div>
 
-        {/* ── Basic Info ──────────────────────────────────────── */}
+        {/* Basic Info */}
         <SectionLabel>Info Dasar</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(180px,1fr))", gap: 12, marginBottom: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(170px, 1fr))", gap: 10, marginBottom: 20 }}>
           <div>
             <label>Date</label>
-            <input type="date" value={form.date} onChange={e => set("date", e.target.value)}
-              style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8 }} />
+            <input type="date" value={form.date} onChange={e => set("date", e.target.value)} style={inputStyle}/>
           </div>
           <div>
             <label>Pair / Symbol</label>
-            <input type="text" value={form.pair} onChange={e => set("pair", e.target.value.toUpperCase())}
-              placeholder="EUR/USD, BBCA, BTC/USDT"
-              style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8, fontFamily: "DM Mono, monospace", textTransform: "uppercase" }} />
+            <input type="text" value={form.pair}
+              onChange={e => set("pair", e.target.value.toUpperCase())}
+              placeholder="EUR/USD, BBCA, BTC"
+              style={{ ...monoInputStyle, textTransform: "uppercase" }}/>
           </div>
           <div>
             <label>Market</label>
-            <select value={form.market} onChange={e => set("market", e.target.value)}
-              style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8 }}>
+            <select value={form.market} onChange={e => set("market", e.target.value)} style={inputStyle}>
               {MARKETS.map(m => <option key={m}>{m}</option>)}
             </select>
           </div>
           <div>
-            <label>Side</label>
-            <div style={{ display: "flex", gap: 6 }}>
-              {SIDES.map(s => (
-                <button key={s} onClick={() => set("side", s)}
-                  style={{
-                    flex: 1, padding: "9px 0", borderRadius: 8, cursor: "pointer",
-                    fontFamily: "DM Mono, monospace", fontSize: 12, fontWeight: 600,
-                    letterSpacing: "0.08em",
-                    border: `1px solid ${form.side === s ? (s === "BUY" ? "#00c896" : "#f59e0b") : t.border}`,
-                    background: form.side === s
-                      ? (s === "BUY" ? "rgba(0,200,150,0.1)" : "rgba(245,158,11,0.1)")
-                      : "transparent",
-                    color: form.side === s ? (s === "BUY" ? "#00c896" : "#f59e0b") : t.textMuted,
-                    transition: "all 0.15s",
-                  }}>
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div>
             <label>Session</label>
-            <select value={form.session} onChange={e => set("session", e.target.value)}
-              style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8 }}>
+            <select value={form.session} onChange={e => set("session", e.target.value)} style={inputStyle}>
               {SESSIONS.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div>
             <label>Strategy</label>
-            <select value={form.strategy} onChange={e => set("strategy", e.target.value)}
-              style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8 }}>
+            <select value={form.strategy} onChange={e => set("strategy", e.target.value)} style={inputStyle}>
               {STRATEGIES.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
-        </div>
-
-        {/* ── Price Levels ────────────────────────────────────── */}
-        <SectionLabel>Price Levels</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(180px,1fr))", gap: 12, marginBottom: 20 }}>
-          <div>
-            <label>Entry Price</label>
-            {inp("entry")}
-          </div>
-          <div>
-            <label>Stop Loss <span style={{ color: t.textDim, textTransform: "none", fontSize: 9 }}>→ R:R</span></label>
-            {inp("stopLoss")}
-          </div>
-          <div>
-            <label>Take Profit <span style={{ color: t.textDim, textTransform: "none", fontSize: 9 }}>→ R:R</span></label>
-            {inp("takeProfit")}
-          </div>
-          <div>
-            <label>Exit Price <span style={{ color: t.textDim, textTransform: "none", fontSize: 9 }}>→ P&L</span></label>
-            {inp("exit")}
-          </div>
-          <div>
-            <label>Position Size (lot)</label>
-            {inp("size", "0.1")}
-          </div>
           <div>
             <label>Emotion</label>
-            <select value={form.emotion} onChange={e => set("emotion", e.target.value)}
-              style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8 }}>
+            <select value={form.emotion} onChange={e => set("emotion", e.target.value)} style={inputStyle}>
               {EMOTIONS.map(em => <option key={em}>{em}</option>)}
             </select>
           </div>
         </div>
 
-        {/* ── Auto P&L + R:R ──────────────────────────────────── */}
+        {/* Side selector */}
+        <div style={{ marginBottom: 20 }}>
+          <label>Side</label>
+          <div style={{ display: "flex", gap: 8 }}>
+            {SIDES.map(s => {
+              const active = form.side === s;
+              const color  = s === "BUY" ? "var(--success)" : "var(--warning)";
+              const dimColor = s === "BUY" ? "var(--success-dim)" : "var(--warning-dim)";
+              return (
+                <button key={s} onClick={() => set("side", s)} style={{
+                  flex: 1, padding: "9px 0",
+                  borderRadius: "var(--r-md)",
+                  cursor: "pointer",
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "var(--fs-sm)",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  border: `1px solid ${active ? color : "var(--border)"}`,
+                  background: active ? dimColor : "transparent",
+                  color: active ? color : "var(--text-muted)",
+                  transition: "all 0.15s",
+                }}>
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Price Levels */}
+        <SectionLabel>Price Levels</SectionLabel>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)", gap: 10, marginBottom: 20 }}>
+          {[
+            { k: "entry",      label: "Entry" },
+            { k: "stopLoss",   label: "Stop Loss" },
+            { k: "takeProfit", label: "Take Profit" },
+            { k: "exit",       label: "Exit Price" },
+            { k: "size",       label: "Size (lot)", placeholder: "0.01" },
+          ].map(f => (
+            <div key={f.k}>
+              <label>{f.label}</label>
+              <NumInput k={f.k} placeholder={f.placeholder ?? "0.00"}/>
+            </div>
+          ))}
+        </div>
+
+        {/* Auto P&L + R:R */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
           {[
-            { key: "pnl", label: "P&L — auto calculated", color: pnlColor },
-            { key: "rr",  label: "R:R — auto calculated",  color: rrColor  },
+            { k: "pnl", label: "P&L", hint: "auto calculated", color: pnlColor },
+            { k: "rr",  label: "R:R", hint: "auto calculated", color: rrColor  },
           ].map(f => (
-            <div key={f.key} style={{
-              background: `${f.color}08`,
-              border: `1px solid ${f.color}25`,
-              borderRadius: 10, padding: "12px 14px",
+            <div key={f.k} style={{
+              background: "var(--bg-subtle)",
+              border: "1px solid var(--border)",
+              borderRadius: "var(--r-lg)",
+              padding: "12px 14px",
             }}>
-              <label style={{ color: t.textDim }}>{f.label}</label>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                <label style={{ color: "var(--text-dim)", marginBottom: 0 }}>{f.label}</label>
+                <span style={{ fontSize: "var(--fs-2xs)", color: "var(--text-dim)" }}>{f.hint}</span>
+              </div>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <input type="number" step="any" value={form[f.key]}
-                  onChange={e => set(f.key, e.target.value)}
+                <input type="number" step="any" value={form[f.k]}
+                  onChange={e => set(f.k, e.target.value)}
                   placeholder="0.00"
                   style={{
                     background: "transparent", border: "none",
-                    color: f.color, fontFamily: "DM Mono, monospace",
-                    fontSize: 20, fontWeight: 600, padding: 0,
-                    outline: "none", width: "100%",
-                  }} />
-                <span style={{ fontSize: 9, color: t.textDim, flexShrink: 0 }}>override</span>
+                    color: f.color, fontFamily: "var(--font-mono)",
+                    fontSize: "var(--fs-2xl)", fontWeight: 600,
+                    padding: 0, outline: "none", width: "100%",
+                  }}/>
               </div>
             </div>
           ))}
         </div>
 
-        {/* ── Notes + Tags ────────────────────────────────────── */}
+        {/* Notes & Tags */}
         <SectionLabel>Notes & Tags</SectionLabel>
-        <div style={{ marginBottom: 14 }}>
+        <div style={{ marginBottom: 12 }}>
           <label>Notes</label>
-          <textarea value={form.notes} onChange={e => set("notes", e.target.value)}
-            rows={2} placeholder="Trade reasoning, market context, lessons..."
-            style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8, lineHeight: 1.6 }} />
+          <textarea
+            value={form.notes}
+            onChange={e => set("notes", e.target.value)}
+            rows={3}
+            placeholder="Trade reasoning, market context, lessons learned..."
+            style={{ ...inputStyle, resize: "vertical", lineHeight: 1.6, minHeight: 72 }}
+          />
         </div>
         <div style={{ marginBottom: 20 }}>
-          <TagSelector tags={form.tags ?? []} onChange={tags => set("tags", tags)} theme={t} />
+          <TagSelector tags={form.tags ?? []} onChange={tags => set("tags", tags)} theme={theme}/>
         </div>
 
-        {/* ── Screenshots ─────────────────────────────────────── */}
+        {/* Screenshots */}
         <SectionLabel>Screenshots ({screenshots.length}/5)</SectionLabel>
         <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-          <input type="text" value={urlInput}
+          <input
+            type="text" value={urlInput}
             onChange={e => setUrlInput(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addUrl(urlInput); setUrlInput(""); } }}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addUrl(urlInput); setUrlInput(""); }}}
             placeholder="Paste URL gambar lalu Enter..."
-            style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8, flex: 1 }}
-            disabled={screenshots.length >= 5} />
+            style={{ ...inputStyle, flex: 1 }}
+            disabled={screenshots.length >= 5}
+          />
           <button onClick={() => { addUrl(urlInput); setUrlInput(""); }}
-            className="btn-ghost" style={{ whiteSpace: "nowrap", fontSize: 11 }}
+            className="btn-ghost"
             disabled={!urlInput.trim() || screenshots.length >= 5}>
             + URL
           </button>
           <button onClick={() => fileRef.current?.click()}
-            className="btn-ghost" style={{ whiteSpace: "nowrap", fontSize: 11 }}
+            className="btn-ghost"
             disabled={uploading || screenshots.length >= 5}>
             {uploading ? "Uploading..." : "↑ Upload"}
           </button>
-          <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFileUpload} style={{ display: "none" }} />
+          <input ref={fileRef} type="file" accept="image/*" multiple onChange={handleFileUpload} style={{ display: "none" }}/>
         </div>
-        <ScreenshotGrid urls={screenshots} onRemove={removeScreenshot} theme={t} />
+        <ScreenshotGrid urls={screenshots} onRemove={removeScreenshot}/>
         {screenshots.length === 0 && (
-          <div style={{ fontSize: 11, color: t.textDim, padding: "8px 0" }}>
-            Belum ada screenshot
-          </div>
+          <p style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)", padding: "6px 0" }}>Belum ada screenshot</p>
         )}
 
-        {/* ── Actions ─────────────────────────────────────────── */}
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 24, paddingTop: 20, borderTop: `1px solid ${t.borderSubtle}` }}>
+        {/* Actions */}
+        <div style={{
+          display: "flex", gap: 10, justifyContent: "flex-end",
+          marginTop: 24, paddingTop: 16,
+          borderTop: "1px solid var(--border)",
+        }}>
           <button className="btn-ghost" onClick={onClose} style={{ minWidth: 80 }}>Batal</button>
           <button className="btn-primary" onClick={onSubmit} style={{ minWidth: 140, justifyContent: "center" }}>
             {editingTrade ? "✓ Simpan Perubahan" : "✓ Log Trade"}

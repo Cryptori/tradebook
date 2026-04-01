@@ -4,225 +4,14 @@ import DailyQuote from "../DailyQuote";
 import { useBreakpoint } from "../../hooks/useBreakpoint";
 import { MARKET_BIAS, JOURNAL_MOODS } from "../../hooks/useDailyJournal";
 
-// ── Star rating ───────────────────────────────────────────────────
-function StarRating({ value, onChange, theme: t }) {
-  return (
-    <div style={{ display: "flex", gap: 4 }}>
-      {[1, 2, 3, 4, 5].map(i => (
-        <button key={i} onClick={() => onChange(i)}
-          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, padding: 2,
-            color: i <= value ? "#f59e0b" : t.border, transition: "color 0.15s" }}>
-          ★
-        </button>
-      ))}
-    </div>
-  );
-}
+// ── Constants ─────────────────────────────────────────────────────
+const BIAS_COLOR = {
+  Bullish:   "var(--success)",
+  Bearish:   "var(--danger)",
+  Sideways:  "var(--warning)",
+  Uncertain: "var(--text-dim)",
+};
 
-// ── Entry Form ────────────────────────────────────────────────────
-function EntryForm({ form, setForm, onSave, onCancel, saving, theme: t }) {
-  const { isMobile } = useBreakpoint();
-  function set(key, val) { setForm(p => ({ ...p, [key]: val })); }
-
-  const textarea = (key, placeholder, rows = 3) => (
-    <textarea value={form[key] ?? ""} rows={rows}
-      onChange={e => set(key, e.target.value)}
-      placeholder={placeholder}
-      style={{ width: "100%", background: t.bgInput, border: `1px solid ${t.border}`,
-        color: t.text, borderRadius: 8, padding: "9px 12px", fontSize: 12,
-        fontFamily: "DM Mono, monospace", resize: "vertical", outline: "none" }} />
-  );
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-
-      {/* Date + Mood + Bias row */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
-        <div>
-          <label style={{ color: t.textDim }}>Tanggal</label>
-          <input type="date" value={form.date}
-            onChange={e => set("date", e.target.value)}
-            style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text }} />
-        </div>
-        <div>
-          <label style={{ color: t.textDim }}>Market Bias</label>
-          <select value={form.market_bias ?? "Uncertain"}
-            onChange={e => set("market_bias", e.target.value)}
-            style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text }}>
-            {MARKET_BIAS.map(b => <option key={b}>{b}</option>)}
-          </select>
-        </div>
-        <div>
-          <label style={{ color: t.textDim }}>Mood Hari Ini</label>
-          <select value={form.mood ?? ""}
-            onChange={e => set("mood", e.target.value)}
-            style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text }}>
-            <option value="">— Pilih mood —</option>
-            {JOURNAL_MOODS.map(m => <option key={m}>{m}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Day rating */}
-      <div>
-        <label style={{ color: t.textDim }}>Rating Hari Ini</label>
-        <StarRating value={form.rating ?? 3} onChange={v => set("rating", v)} theme={t} />
-      </div>
-
-      {/* Watchlist */}
-      <div>
-        <label style={{ color: t.textDim }}>Watchlist / Pair yang Dipantau</label>
-        <input type="text" value={form.watchlist ?? ""}
-          onChange={e => set("watchlist", e.target.value)}
-          placeholder="EUR/USD, BTC/USDT, BBCA..."
-          style={{ background: t.bgInput, border: `1px solid ${t.border}`, color: t.text }} />
-      </div>
-
-      {/* Pre/Post market — side by side on desktop */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-        <div>
-          <label style={{ color: t.textDim }}>Pre-Market Analysis</label>
-          {textarea("pre_market", "Kondisi market, level penting, setup yang dicari, rencana hari ini...", 5)}
-        </div>
-        <div>
-          <label style={{ color: t.textDim }}>Post-Market Review</label>
-          {textarea("post_market", "Apa yang terjadi? Apakah sesuai rencana? Eksekusi bagaimana?...", 5)}
-        </div>
-      </div>
-
-      {/* Lessons + Goals */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-        <div>
-          <label style={{ color: t.textDim }}>Lessons Learned</label>
-          {textarea("lessons", "Apa yang dipelajari hari ini? Kesalahan yang perlu dihindari?...", 3)}
-        </div>
-        <div>
-          <label style={{ color: t.textDim }}>Goals Besok</label>
-          {textarea("goals", "Target besok, setup yang akan dicari, improvement yang mau dicoba...", 3)}
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-        {onCancel && <button className="btn-ghost" onClick={onCancel}>Batal</button>}
-        <button className="btn-primary" onClick={onSave} disabled={saving}>
-          {saving ? "Menyimpan..." : "SIMPAN JURNAL"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ── Entry Card (list item) ────────────────────────────────────────
-const BIAS_COLOR = { Bullish: "#00d4aa", Bearish: "#ef4444", Sideways: "#f59e0b", Uncertain: "#64748b" };
-
-function EntryCard({ entry, isSelected, onClick, onDelete, theme: t }) {
-  const biasColor = BIAS_COLOR[entry.market_bias] ?? t.textDim;
-  return (
-    <div onClick={onClick}
-      style={{ background: isSelected ? `${biasColor}10` : t.bgCard,
-        borderTop: `1px solid ${isSelected ? biasColor : t.border}`,
-        borderRight: `1px solid ${isSelected ? biasColor : t.border}`,
-        borderBottom: `1px solid ${isSelected ? biasColor : t.border}`,
-        borderLeft: `3px solid ${biasColor}`,
-        borderRadius: 10, padding: "12px 14px", cursor: "pointer", transition: "all 0.15s" }}
-      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = t.bgHover; }}
-      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isSelected ? `${biasColor}10` : t.bgCard; }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 12, fontWeight: 500, color: t.text }}>{entry.date}</div>
-          <div style={{ display: "flex", gap: 6, marginTop: 4, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontSize: 10, color: biasColor, background: `${biasColor}15`,
-              border: `1px solid ${biasColor}30`, borderRadius: 4, padding: "2px 7px" }}>
-              {entry.market_bias}
-            </span>
-            {entry.mood && <span style={{ fontSize: 10, color: t.textDim }}>{entry.mood}</span>}
-          </div>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: 12, color: "#f59e0b" }}>{"★".repeat(entry.rating ?? 0)}</span>
-          <button onClick={e => { e.stopPropagation(); onDelete(entry.id); }}
-            style={{ background: "none", border: "none", color: t.textDim, cursor: "pointer", fontSize: 13, padding: "0 2px" }}>🗑️</button>
-        </div>
-      </div>
-      {entry.pre_market && (
-        <div style={{ fontSize: 11, color: t.textDim, marginTop: 6, display: "-webkit-box",
-          WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.5 }}>
-          {entry.pre_market}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Detail view ───────────────────────────────────────────────────
-function EntryDetail({ entry, onEdit, theme: t }) {
-  const { isMobile } = useBreakpoint();
-  const biasColor = BIAS_COLOR[entry.market_bias] ?? t.textDim;
-
-  const section = (title, content) => content ? (
-    <div>
-      <div style={{ fontSize: 10, color: t.textDim, textTransform: "uppercase",
-        letterSpacing: "0.1em", marginBottom: 8 }}>{title}</div>
-      <div style={{ background: t.bgSubtle, border: `1px solid ${t.borderSubtle}`,
-        borderRadius: 8, padding: "10px 14px", fontSize: 12, color: t.textMuted,
-        lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
-        {content}
-      </div>
-    </div>
-  ) : null;
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          <div style={{ width: 4, alignSelf: "stretch", background: biasColor, borderRadius: 4 }} />
-          <div>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22,
-              letterSpacing: 2, color: t.text }}>{entry.date}</div>
-            <div style={{ display: "flex", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
-              <span style={{ fontSize: 11, color: biasColor }}>{entry.market_bias}</span>
-              {entry.mood && <span style={{ fontSize: 11, color: t.textDim }}>{entry.mood}</span>}
-              <span style={{ fontSize: 12, color: "#f59e0b" }}>{"★".repeat(entry.rating ?? 0)}</span>
-            </div>
-          </div>
-        </div>
-        <button className="btn-ghost" onClick={onEdit} style={{ fontSize: 12 }}>✏️ Edit</button>
-      </div>
-
-      {entry.watchlist && (
-        <div>
-          <div style={{ fontSize: 10, color: t.textDim, textTransform: "uppercase",
-            letterSpacing: "0.1em", marginBottom: 6 }}>Watchlist</div>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {entry.watchlist.split(/[,\s]+/).filter(Boolean).map(p => (
-              <span key={p} style={{ fontSize: 11, background: t.bgSubtle,
-                border: `1px solid ${t.borderSubtle}`, borderRadius: 6, padding: "3px 10px", color: t.textMuted }}>
-                {p}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-        {section("Pre-Market Analysis", entry.pre_market)}
-        {section("Post-Market Review", entry.post_market)}
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
-        {section("Lessons Learned", entry.lessons)}
-        {section("Goals Besok", entry.goals)}
-      </div>
-
-      <div style={{ fontSize: 10, color: t.textDim, borderTop: `1px solid ${t.borderSubtle}`, paddingTop: 8 }}>
-        Disimpan: {new Date(entry.updated_at ?? entry.date).toLocaleString("id-ID")}
-      </div>
-    </div>
-  );
-}
-
-// ── Main DailyJournal Page ────────────────────────────────────────
 const EMPTY_FORM = {
   date:        new Date().toISOString().split("T")[0],
   mood:        "",
@@ -235,17 +24,234 @@ const EMPTY_FORM = {
   rating:      3,
 };
 
-export default function DailyJournal({ entries, loading, error, onSave, onDelete, theme, trades }) {
-  const t = theme;
-  const { isMobile } = useBreakpoint();
+// ── Star rating ───────────────────────────────────────────────────
+function StarRating({ value, onChange }) {
+  return (
+    <div style={{ display: "flex", gap: 4 }}>
+      {[1,2,3,4,5].map(i => (
+        <button key={i} onClick={() => onChange(i)} style={{
+          background: "none", border: "none", cursor: "pointer",
+          fontSize: 22, padding: 2, lineHeight: 1,
+          color: i <= value ? "var(--gold)" : "var(--border)",
+          transition: "color var(--t-fast)",
+        }}>★</button>
+      ))}
+    </div>
+  );
+}
 
-  const [mode,     setMode]     = useState("list");   // "list" | "new" | "edit" | "detail"
+// ── Entry form ────────────────────────────────────────────────────
+function EntryForm({ form, setForm, onSave, onCancel, saving }) {
+  const { isMobile } = useBreakpoint();
+  const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Date + Bias + Mood */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 10 }}>
+        <div>
+          <label>Tanggal</label>
+          <input type="date" value={form.date} onChange={e => set("date", e.target.value)}/>
+        </div>
+        <div>
+          <label>Market Bias</label>
+          <select value={form.market_bias ?? "Uncertain"} onChange={e => set("market_bias", e.target.value)}>
+            {MARKET_BIAS.map(b => <option key={b}>{b}</option>)}
+          </select>
+        </div>
+        <div>
+          <label>Mood Hari Ini</label>
+          <select value={form.mood ?? ""} onChange={e => set("mood", e.target.value)}>
+            <option value="">— Pilih mood —</option>
+            {JOURNAL_MOODS.map(m => <option key={m}>{m}</option>)}
+          </select>
+        </div>
+      </div>
+
+      {/* Rating */}
+      <div>
+        <label>Rating Hari Ini</label>
+        <StarRating value={form.rating ?? 3} onChange={v => set("rating", v)}/>
+      </div>
+
+      {/* Watchlist */}
+      <div>
+        <label>Watchlist / Pair yang Dipantau</label>
+        <input type="text" value={form.watchlist ?? ""}
+          onChange={e => set("watchlist", e.target.value)}
+          placeholder="EUR/USD, BTC/USDT, BBCA..."/>
+      </div>
+
+      {/* Pre/Post market */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+        <div>
+          <label>Pre-Market Analysis</label>
+          <textarea value={form.pre_market ?? ""} rows={5}
+            onChange={e => set("pre_market", e.target.value)}
+            placeholder="Kondisi market, level penting, setup yang dicari, rencana hari ini..."
+            style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-xs)" }}/>
+        </div>
+        <div>
+          <label>Post-Market Review</label>
+          <textarea value={form.post_market ?? ""} rows={5}
+            onChange={e => set("post_market", e.target.value)}
+            placeholder="Apa yang terjadi? Sesuai rencana? Eksekusi bagaimana?..."
+            style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-xs)" }}/>
+        </div>
+      </div>
+
+      {/* Lessons + Goals */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+        <div>
+          <label>Lessons Learned</label>
+          <textarea value={form.lessons ?? ""} rows={3}
+            onChange={e => set("lessons", e.target.value)}
+            placeholder="Apa yang dipelajari? Kesalahan yang perlu dihindari?..."/>
+        </div>
+        <div>
+          <label>Goals Besok</label>
+          <textarea value={form.goals ?? ""} rows={3}
+            onChange={e => set("goals", e.target.value)}
+            placeholder="Target besok, setup yang dicari, improvement yang mau dicoba..."/>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        {onCancel && <button className="btn-ghost" onClick={onCancel}>Batal</button>}
+        <button className="btn-primary" onClick={onSave} disabled={saving}>
+          {saving ? "Menyimpan..." : "Simpan Jurnal"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Entry card ────────────────────────────────────────────────────
+function EntryCard({ entry, isSelected, onClick, onDelete }) {
+  const biasColor = BIAS_COLOR[entry.market_bias] ?? "var(--text-dim)";
+  return (
+    <div onClick={onClick} style={{
+      background: "var(--bg-card)",
+      border:     `1px solid ${isSelected ? biasColor : "var(--border)"}`,
+      borderLeft: `3px solid ${biasColor}`,
+      borderRadius: "var(--r-lg)",
+      padding: "10px 12px",
+      cursor: "pointer",
+      transition: "all var(--t-base)",
+    }}
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = "var(--bg-hover)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-card)"; }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: "var(--fs-sm)", fontWeight: 600, color: "var(--text)", fontFamily: "var(--font-mono)" }}>
+            {entry.date}
+          </div>
+          <div style={{ display: "flex", gap: 6, marginTop: 4, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "var(--fs-2xs)", color: biasColor, background: "var(--bg-subtle)", border: `1px solid ${biasColor}`, borderRadius: 3, padding: "1px 6px" }}>
+              {entry.market_bias}
+            </span>
+            {entry.mood && <span style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)" }}>{entry.mood}</span>}
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span style={{ fontSize: "var(--fs-sm)", color: "var(--gold)" }}>{"★".repeat(entry.rating ?? 0)}</span>
+          <button onClick={e => { e.stopPropagation(); onDelete(entry.id); }}
+            className="btn-icon" style={{ width: 22, height: 22, color: "var(--danger)" }}>
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      {entry.pre_market && (
+        <div style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)", marginTop: 6, lineHeight: 1.5,
+          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {entry.pre_market}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Entry detail ──────────────────────────────────────────────────
+function EntryDetail({ entry, onEdit }) {
+  const { isMobile } = useBreakpoint();
+  const biasColor = BIAS_COLOR[entry.market_bias] ?? "var(--text-dim)";
+
+  function Section({ title, content }) {
+    if (!content) return null;
+    return (
+      <div>
+        <div className="section-label" style={{ marginBottom: 8 }}>{title}</div>
+        <div style={{ background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: "var(--r-md)", padding: "10px 14px", fontSize: "var(--fs-sm)", color: "var(--text-muted)", lineHeight: 1.8, whiteSpace: "pre-wrap" }}>
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ width: 4, alignSelf: "stretch", background: biasColor, borderRadius: 4, flexShrink: 0 }}/>
+          <div>
+            <h2 style={{ fontFamily: "var(--font-disp)", fontSize: 20, letterSpacing: 2, color: "var(--text)", fontWeight: 400 }}>
+              {entry.date}
+            </h2>
+            <div style={{ display: "flex", gap: 8, marginTop: 4, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "var(--fs-sm)", color: biasColor, fontWeight: 500 }}>{entry.market_bias}</span>
+              {entry.mood && <span style={{ fontSize: "var(--fs-sm)", color: "var(--text-dim)" }}>{entry.mood}</span>}
+              <span style={{ color: "var(--gold)" }}>{"★".repeat(entry.rating ?? 0)}</span>
+            </div>
+          </div>
+        </div>
+        <button className="btn-ghost" onClick={onEdit} style={{ fontSize: "var(--fs-sm)", height: 30 }}>
+          Edit
+        </button>
+      </div>
+
+      {/* Watchlist */}
+      {entry.watchlist && (
+        <div>
+          <div className="section-label" style={{ marginBottom: 6 }}>Watchlist</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {entry.watchlist.split(/[,\s]+/).filter(Boolean).map(p => (
+              <span key={p} style={{ fontSize: "var(--fs-xs)", background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: "var(--r-sm)", padding: "2px 8px", color: "var(--text-muted)", fontFamily: "var(--font-mono)" }}>
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+        <Section title="Pre-Market Analysis" content={entry.pre_market}/>
+        <Section title="Post-Market Review"  content={entry.post_market}/>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 10 }}>
+        <Section title="Lessons Learned" content={entry.lessons}/>
+        <Section title="Goals Besok"     content={entry.goals}/>
+      </div>
+
+      <div style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)", paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+        Disimpan: {new Date(entry.updated_at ?? entry.date).toLocaleString("id-ID")}
+      </div>
+    </div>
+  );
+}
+
+// ── Main DailyJournal ─────────────────────────────────────────────
+export default function DailyJournal({ entries, loading, error, onSave, onDelete, theme, trades }) {
+  const { isMobile } = useBreakpoint();
+  const [mode,     setMode]     = useState("list");
   const [selected, setSelected] = useState(0);
   const [form,     setForm]     = useState({ ...EMPTY_FORM });
   const [saving,   setSaving]   = useState(false);
   const [search,   setSearch]   = useState("");
-
-  function setSearchSafe(v) { setSearch(v); setSelected(0); }
 
   const filtered = useMemo(() => {
     if (!search.trim()) return entries;
@@ -264,10 +270,7 @@ export default function DailyJournal({ entries, loading, error, onSave, onDelete
     setMode("new");
   }
 
-  function openEdit(entry) {
-    setForm({ ...entry });
-    setMode("edit");
-  }
+  function openEdit(entry) { setForm({ ...entry }); setMode("edit"); }
 
   async function handleSave() {
     if (!form.date) return;
@@ -282,40 +285,41 @@ export default function DailyJournal({ entries, loading, error, onSave, onDelete
   }
 
   if (loading) return (
-    <div style={{ textAlign: "center", padding: 80, color: t.textDim, fontSize: 13 }}>
-      Loading journal...
-    </div>
+    <div style={{ textAlign: "center", padding: 80, color: "var(--text-dim)" }}>Loading journal...</div>
   );
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start",
-        marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24,
-            letterSpacing: 2, color: t.text }}>DAILY JOURNAL</div>
-          <div style={{ fontSize: 11, color: t.textDim }}>{entries.length} entri tersimpan</div>
+          <h1 className="page-title">Daily Journal</h1>
+          <p className="page-subtitle">{entries.length} entri tersimpan</p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           {mode === "list" && (
-            <input value={search} onChange={e => setSearchSafe(e.target.value)}
-              placeholder="Cari jurnal..."
-              style={{ width: 160, background: t.bgInput, border: `1px solid ${t.border}`,
-                color: t.text, padding: "8px 12px", borderRadius: 8, fontSize: 12, outline: "none" }} />
+            <input value={search} onChange={e => { setSearch(e.target.value); setSelected(0); }}
+              placeholder="Cari jurnal..." style={{ width: 150, height: 30, fontSize: "var(--fs-sm)" }}/>
           )}
           {mode !== "new" && (
-            <button className="btn-primary" onClick={openNew}>+ Tulis Jurnal</button>
+            <button className="btn-primary" onClick={openNew} style={{ height: 30, fontSize: "var(--fs-sm)" }}>
+              + Tulis Jurnal
+            </button>
           )}
           {(mode === "new" || mode === "edit") && (
-            <button className="btn-ghost" onClick={() => setMode("list")}>← Kembali</button>
+            <button className="btn-ghost" onClick={() => setMode("list")} style={{ height: 30, fontSize: "var(--fs-sm)" }}>
+              ← Kembali
+            </button>
           )}
         </div>
       </div>
 
+      {/* Daily quote */}
+      {mode === "list" && <DailyQuote theme={theme}/>}
+
+      {/* Error */}
       {error && (
-        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.4)",
-          borderRadius: 8, padding: "10px 14px", fontSize: 12, color: "#ef4444", marginBottom: 16 }}>
+        <div style={{ background: "var(--danger-dim)", border: "1px solid var(--danger)", borderRadius: "var(--r-md)", padding: "10px 14px", fontSize: "var(--fs-sm)", color: "var(--danger)" }}>
           ⚠️ {error}
         </div>
       )}
@@ -323,23 +327,22 @@ export default function DailyJournal({ entries, loading, error, onSave, onDelete
       {/* New / Edit form */}
       {(mode === "new" || mode === "edit") && (
         <div className="stat-card">
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 18, letterSpacing: 2,
-            color: t.text, marginBottom: 20 }}>
+          <h2 style={{ fontFamily: "var(--font-disp)", fontSize: 18, letterSpacing: 2, color: "var(--text)", fontWeight: 400, marginBottom: 20 }}>
             {mode === "new" ? "JURNAL BARU" : "EDIT JURNAL"}
-          </div>
+          </h2>
           <EntryForm form={form} setForm={setForm} onSave={handleSave}
-            onCancel={() => setMode("list")} saving={saving} theme={t} />
+            onCancel={() => setMode("list")} saving={saving}/>
         </div>
       )}
 
-      {/* Mobile detail view */}
+      {/* Mobile detail */}
       {mode === "detail" && filtered[selected] && (
         <div>
-          <button className="btn-ghost" onClick={() => setMode("list")}
-            style={{ marginBottom: 16, fontSize: 12 }}>← Kembali ke List</button>
+          <button className="btn-ghost" onClick={() => setMode("list")} style={{ marginBottom: 12, fontSize: "var(--fs-sm)" }}>
+            ← Kembali
+          </button>
           <div className="stat-card">
-            <EntryDetail entry={filtered[selected]}
-              onEdit={() => openEdit(filtered[selected])} theme={t} />
+            <EntryDetail entry={filtered[selected]} onEdit={() => openEdit(filtered[selected])}/>
           </div>
         </div>
       )}
@@ -347,52 +350,42 @@ export default function DailyJournal({ entries, loading, error, onSave, onDelete
       {/* List + detail */}
       {mode === "list" && (
         entries.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "80px 0" }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>📝</div>
-            <div style={{ fontSize: 16, color: t.text, marginBottom: 8 }}>Belum Ada Jurnal</div>
-            <div style={{ fontSize: 13, color: t.textDim, marginBottom: 24, maxWidth: 400, margin: "0 auto 24px" }}>
-              Mulai catat market outlook, pre/post market analysis, dan lessons learned setiap hari.
+          <div className="stat-card">
+            <div className="empty-state">
+              <div className="empty-icon">📝</div>
+              <div className="empty-title">Belum Ada Jurnal</div>
+              <div className="empty-desc">Catat market outlook, pre/post market analysis, dan lessons learned setiap hari.</div>
+              <button className="btn-primary" onClick={openNew} style={{ marginTop: 16 }}>+ Tulis Jurnal Pertama</button>
             </div>
-            <button className="btn-primary" onClick={openNew}>+ Tulis Jurnal Pertama</button>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "280px 1fr",
-            gap: 20, alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "260px 1fr", gap: 14, alignItems: "start" }}>
             {/* Sidebar */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 6,
-              maxHeight: isMobile ? "45vh" : "80vh", overflowY: "auto", paddingRight: 4 }}>
-              {filtered.map((entry, i) => (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: isMobile ? "45vh" : "80vh", overflowY: "auto", paddingRight: 2 }}>
+              {filtered.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 40, color: "var(--text-dim)", fontSize: "var(--fs-sm)" }}>
+                  Tidak ada entri ditemukan.
+                </div>
+              ) : filtered.map((entry, i) => (
                 <EntryCard key={entry.id} entry={entry}
                   isSelected={i === selected}
                   onClick={() => { setSelected(i); if (isMobile) setMode("detail"); }}
-                  onDelete={onDelete}
-                  theme={t} />
+                  onDelete={onDelete}/>
               ))}
-              {filtered.length === 0 && (
-                <div style={{ textAlign: "center", padding: 40, color: t.textDim, fontSize: 12 }}>
-                  Tidak ada entri ditemukan.
-                </div>
-              )}
             </div>
 
             {/* Detail */}
             {!isMobile && filtered[selected] && (
               <div className="stat-card">
-                <EntryDetail entry={filtered[selected]}
-                  onEdit={() => openEdit(filtered[selected])} theme={t} />
+                <EntryDetail entry={filtered[selected]} onEdit={() => openEdit(filtered[selected])}/>
               </div>
             )}
           </div>
         )
       )}
 
-
-      {/* ── Psychology Tracker ──────────────────────────────── */}
-      <PsychologyTracker
-        trades={trades || []}
-        journalEntries={entries || []}
-        theme={t}
-      />
+      {/* Psychology tracker */}
+      <PsychologyTracker trades={trades || []} journalEntries={entries || []} theme={theme}/>
     </div>
   );
 }

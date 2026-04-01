@@ -88,7 +88,7 @@ export function useAdvancedFilter(trades) {
       if (filter.result === "loss" && tr.pnl >= 0) return false;
       if (filter.dateFrom && tr.date < filter.dateFrom) return false;
       if (filter.dateTo   && tr.date > filter.dateTo)   return false;
-      if (filter.tags.length > 0 && !filter.tags.every(tag => (tr.tags || []).includes(tag))) return false;
+      if (filter.tags.length > 0 && !filter.tags.every(tg => (tr.tags || []).includes(tg))) return false;
       return true;
     });
   }, [trades, filter]);
@@ -112,7 +112,7 @@ export function useAdvancedFilter(trades) {
   const toggleTag = useCallback((tag) => {
     setFilter(p => ({
       ...p,
-      tags: p.tags.includes(tag) ? p.tags.filter(t => t !== tag) : [...p.tags, tag],
+      tags: p.tags.includes(tag) ? p.tags.filter(tg => tg !== tag) : [...p.tags, tag],
     }));
   }, []);
   const clearFilter = useCallback(() => setFilter(EMPTY_FILTER), []);
@@ -157,7 +157,7 @@ export function useAdvancedFilter(trades) {
 
   const bulkRemoveTag = useCallback((tag, updateTrade) => {
     filtered.filter(t => selected.has(t.id)).forEach(tr => {
-      const tags = (tr.tags || []).filter(t => t !== tag);
+      const tags = (tr.tags || []).filter(tg => tg !== tag);
       updateTrade(tr.id, { tags });
     });
     clearSelect();

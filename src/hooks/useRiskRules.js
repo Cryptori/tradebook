@@ -16,8 +16,8 @@ export function useRiskRules(trades, settings) {
       return d.toISOString().slice(0, 10);
     })();
 
-    const todayTrades  = trades.filter(t => t.date === today);
-    const weekTrades   = trades.filter(t => t.date >= weekStart);
+    const todayTrades  = (trades || []).filter(t => t.date === today);
+    const weekTrades   = (trades || []).filter(t => t.date >= weekStart);
 
     // Today P&L
     const todayPnl  = todayTrades.reduce((s, t) => s + (t.pnl || 0), 0);
@@ -26,7 +26,7 @@ export function useRiskRules(trades, settings) {
 
     // Consecutive loss streak (recent)
     let consLoss = 0;
-    const sorted = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const sorted = [...(trades || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
     for (const tr of sorted) {
       if (tr.pnl < 0) consLoss++;
       else break;

@@ -6,200 +6,185 @@ import {
 } from "recharts";
 import { formatCurrency, formatPct, formatRR } from "../../utils/formatters";
 
-// ── Pure helpers ─────────────────────────────────────────────────
+// ── Chart tooltip style ───────────────────────────────────────────
+const chartTip = {
+  contentStyle: {
+    background: "var(--bg-card)", border: "1px solid var(--border)",
+    borderRadius: "var(--r-md)", fontSize: 11, color: "var(--text)",
+    boxShadow: "var(--shadow-md)",
+  },
+  cursor: { stroke: "var(--border)", strokeWidth: 1 },
+};
 
+// ── Helpers ───────────────────────────────────────────────────────
 function getWeekKey(dateStr) {
   const d   = new Date(dateStr + "T00:00:00");
-  const day = d.getDay(); // 0=Sun
   const mon = new Date(d);
-  mon.setDate(d.getDate() - ((day + 6) % 7)); // Monday
+  mon.setDate(d.getDate() - ((d.getDay() + 6) % 7));
   return mon.toISOString().slice(0, 10);
-}
-
-function getMonthKey(dateStr) {
-  return dateStr.slice(0, 7);
 }
 
 function calcPeriodStats(trades) {
   if (!trades.length) return null;
   const wins   = trades.filter(tr => tr.pnl > 0);
   const losses = trades.filter(tr => tr.pnl <= 0);
-  const totalPnl    = trades.reduce((s, tr) => s + tr.pnl, 0);
+  const totalPnl    = trades.reduce((s, tr) => s + (tr.pnl || 0), 0);
   const grossProfit = wins.reduce((s, tr) => s + tr.pnl, 0);
   const grossLoss   = Math.abs(losses.reduce((s, tr) => s + tr.pnl, 0));
-  const avgRR       = trades.filter(tr => tr.rr).length
-    ? trades.filter(tr => tr.rr).reduce((s, tr) => s + (tr.rr ?? 0), 0) / trades.filter(tr => tr.rr).length
-    : 0;
+  const rrTrades    = trades.filter(tr => tr.rr);
+  const avgRR       = rrTrades.length ? rrTrades.reduce((s, tr) => s + (tr.rr ?? 0), 0) / rrTrades.length : 0;
 
-  // Best/worst streak
-  let streak = 0, maxWin = 0, maxLoss = 0, curStreak = 0, curType = null;
+  let maxWin = 0, maxLoss = 0, curStreak = 0, curType = null;
   [...trades].sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(tr => {
     const type = tr.pnl > 0 ? "win" : "loss";
-    if (type === curType) { curStreak++; }
-    else { curStreak = 1; curType = type; }
+    curStreak = type === curType ? curStreak + 1 : 1;
+    curType   = type;
     if (type === "win"  && curStreak > maxWin)  maxWin  = curStreak;
     if (type === "loss" && curStreak > maxLoss) maxLoss = curStreak;
   });
 
-  // Most traded pair & strategy
-  const pairCount     = {};
-  const stratCount    = {};
-  const emotionCount  = {};
-  trades.forEach(tr => {
-    pairCount[tr.pair]         = (pairCount[tr.pair]         ?? 0) + 1;
-    stratCount[tr.strategy]    = (stratCount[tr.strategy]    ?? 0) + 1;
-    emotionCount[tr.emotion]   = (emotionCount[tr.emotion]   ?? 0) + 1;
-  });
-  const topPair     = Object.entries(pairCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
-  const topStrategy = Object.entries(stratCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
-  const topEmotion  = Object.entries(emotionCount).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
+  const count    = (arr, key) => arr.reduce((m, t) => { m[t[key]] = (m[t[key]] ?? 0) + 1; return m; }, {});
+  const topOf    = obj  => Object.entries(obj).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "—";
 
   return {
     totalPnl, trades: trades.length,
     wins: wins.length, losses: losses.length,
-    winRate: trades.length ? (wins.length / trades.length) * 100 : 0,
+    winRate:      trades.length ? (wins.length / trades.length) * 100 : 0,
     profitFactor: grossLoss > 0 ? grossProfit / grossLoss : grossProfit > 0 ? 999 : 0,
-    avgWin:  wins.length   ? grossProfit / wins.length   : 0,
-    avgLoss: losses.length ? -grossLoss  / losses.length : 0,
+    avgWin:       wins.length   ? grossProfit / wins.length   : 0,
+    avgLoss:      losses.length ? -grossLoss  / losses.length : 0,
     avgRR, maxWinStreak: maxWin, maxLossStreak: maxLoss,
-    topPair, topStrategy, topEmotion,
-    bestTrade:  trades.length > 0 ? Math.max(...trades.map(tr => tr.pnl)) : 0,
-    worstTrade: trades.length > 0 ? Math.min(...trades.map(tr => tr.pnl)) : 0,
+    topPair:     topOf(count(trades, "pair")),
+    topStrategy: topOf(count(trades, "strategy")),
+    topEmotion:  topOf(count(trades, "emotion")),
+    bestTrade:   Math.max(...trades.map(tr => tr.pnl)),
+    worstTrade:  Math.min(...trades.map(tr => tr.pnl)),
   };
 }
 
-function groupTradesByPeriod(trades, mode) {
+function groupByPeriod(trades, mode) {
   const groups = {};
   trades.forEach(tr => {
-    const key = mode === "weekly" ? getWeekKey(tr.date) : getMonthKey(tr.date);
+    const key = mode === "weekly" ? getWeekKey(tr.date) : tr.date.slice(0, 7);
     if (!groups[key]) groups[key] = [];
     groups[key].push(tr);
   });
   return Object.entries(groups)
-    .sort((a, b) => b[0].localeCompare(a[0])) // newest first
+    .sort((a, b) => b[0].localeCompare(a[0]))
     .map(([key, ts]) => ({ key, stats: calcPeriodStats(ts), trades: ts }));
 }
 
-// ── Sub-components ───────────────────────────────────────────────
-
-function StatChip({ label, value, color }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <span style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: "0.1em", color: "inherit", opacity: 0.6 }}>{label}</span>
-      <span style={{ fontSize: 14, fontWeight: 500, color: color ?? "inherit" }}>{value}</span>
-    </div>
-  );
-}
-
-function PeriodCard({ period, sym, isSelected, onClick, theme: t }) {
-  const { stats, key } = period;
-  if (!stats) return null;
-  const positive = stats.totalPnl >= 0;
-  const accent   = positive ? "#00d4aa" : "#ef4444";
-
-  const label = key.length === 7
+function periodLabel(key) {
+  return key.length === 7
     ? new Date(key + "-01").toLocaleDateString("id-ID", { month: "long", year: "numeric" })
     : `W ${new Date(key + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "short" })}`;
+}
+
+// ── Period Card ───────────────────────────────────────────────────
+function PeriodCard({ period, sym, isSelected, onClick }) {
+  const { stats, key } = period;
+  if (!stats) return null;
+  const color = stats.totalPnl >= 0 ? "var(--success)" : "var(--danger)";
+  const dimBg = stats.totalPnl >= 0 ? "var(--success-dim)" : "var(--danger-dim)";
 
   return (
     <div onClick={onClick} style={{
-      background:  isSelected ? `${accent}12` : t.bgCard,
-      borderTop:    `1px solid ${isSelected ? accent : t.border}`,
-      borderRight:  `1px solid ${isSelected ? accent : t.border}`,
-      borderBottom: `1px solid ${isSelected ? accent : t.border}`,
-      borderLeft:   `3px solid ${accent}`,
-      borderRadius: 10, padding: "14px 16px",
-      cursor: "pointer", transition: "all 0.15s",
+      background: isSelected ? dimBg : "var(--bg-card)",
+      border:     `1px solid ${isSelected ? (stats.totalPnl >= 0 ? "var(--success)" : "var(--danger)") : "var(--border)"}`,
+      borderLeft: `3px solid ${color}`,
+      borderRadius: "var(--r-lg)",
+      padding: "12px 14px",
+      cursor: "pointer",
+      transition: "all var(--t-base)",
     }}
-      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = t.bgHover; }}
-      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = t.bgCard; }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+      onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = "var(--bg-hover)"; }}
+      onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = "var(--bg-card)"; }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
         <div>
-          <div style={{ fontSize: 12, fontWeight: 500, color: t.text }}>{label}</div>
-          <div style={{ fontSize: 10, color: t.textDim, marginTop: 2 }}>{stats.trades} trades · {stats.winRate.toFixed(0)}% WR</div>
+          <div style={{ fontSize: "var(--fs-sm)", fontWeight: 500, color: "var(--text)" }}>{periodLabel(key)}</div>
+          <div style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)", marginTop: 2 }}>
+            {stats.trades} trades · {stats.winRate.toFixed(0)}% WR
+          </div>
         </div>
-        <div style={{ fontSize: 16, fontWeight: 600, color: accent, textAlign: "right" }}>
-          {formatCurrency(stats.totalPnl, false, sym)}
-          <div style={{ fontSize: 9, color: t.textDim, fontWeight: 400 }}>
-            {stats.profitFactor >= 999 ? "PF: ∞" : `PF: ${stats.profitFactor.toFixed(2)}`}
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: "var(--fs-base)", fontWeight: 600, color, fontFamily: "var(--font-mono)" }}>
+            {formatCurrency(stats.totalPnl, false, sym)}
+          </div>
+          <div style={{ fontSize: "var(--fs-2xs)", color: "var(--text-dim)" }}>
+            PF: {stats.profitFactor >= 999 ? "∞" : stats.profitFactor.toFixed(2)}
           </div>
         </div>
       </div>
-      <div style={{ display: "flex", gap: 4 }}>
-        {[...Array(stats.wins)].map((_, i)  => <div key={`w${i}`}  style={{ flex: 1, height: 4, background: "#00d4aa", borderRadius: 2 }} />)}
-        {[...Array(stats.losses)].map((_, i) => <div key={`l${i}`} style={{ flex: 1, height: 4, background: "#ef4444", borderRadius: 2 }} />)}
+      {/* Win/loss bar */}
+      <div style={{ display: "flex", gap: 2, height: 3 }}>
+        {[...Array(stats.wins)].map((_, i)   => <div key={`w${i}`} style={{ flex: 1, background: "var(--success)", borderRadius: 1 }}/>)}
+        {[...Array(stats.losses)].map((_, i) => <div key={`l${i}`} style={{ flex: 1, background: "var(--danger)",  borderRadius: 1 }}/>)}
       </div>
-
     </div>
   );
 }
 
-function DetailPanel({ period, sym, allTrades, theme: t }) {
-  const { isMobile, md } = useBreakpoint();
+// ── Detail Panel ──────────────────────────────────────────────────
+function DetailPanel({ period, sym }) {
+  const { isMobile } = useBreakpoint();
   const { stats, trades, key } = period;
   if (!stats) return null;
 
-  const accent    = stats.totalPnl >= 0 ? "#00d4aa" : "#ef4444";
-  const sortedT   = [...trades].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const accentColor = stats.totalPnl >= 0 ? "var(--success)" : "var(--danger)";
+
   const dailyData = useMemo(() => {
     const map = {};
-    trades.forEach(tr => {
-      map[tr.date] = (map[tr.date] ?? 0) + tr.pnl;
-    });
-    return Object.entries(map)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([date, pnl]) => ({ date: date.slice(5), pnl }));
+    trades.forEach(tr => { map[tr.date] = (map[tr.date] ?? 0) + tr.pnl; });
+    return Object.entries(map).sort().map(([date, pnl]) => ({ date: date.slice(5), pnl }));
   }, [trades]);
 
-  const label = key.length === 7
-    ? new Date(key + "-01").toLocaleDateString("id-ID", { month: "long", year: "numeric" })
-    : `Week of ${new Date(key + "T00:00:00").toLocaleDateString("id-ID", { day: "2-digit", month: "long" })}`;
-
-  const tooltipStyle = {
-    contentStyle: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 8, fontFamily: "DM Mono", fontSize: 11, color: t.text },
-  };
+  const kpis = [
+    { label: "Total P&L",     val: formatCurrency(stats.totalPnl, false, sym),  color: accentColor },
+    { label: "Win Rate",      val: `${stats.winRate.toFixed(1)}%`,               color: stats.winRate >= 50 ? "var(--success)" : "var(--warning)" },
+    { label: "Profit Factor", val: stats.profitFactor >= 999 ? "∞" : stats.profitFactor.toFixed(2), color: stats.profitFactor >= 1 ? "var(--success)" : "var(--danger)" },
+    { label: "Avg R:R",       val: formatRR(stats.avgRR),                        color: stats.avgRR >= 1 ? "var(--success)" : "var(--warning)" },
+    { label: "Avg Win",       val: formatCurrency(stats.avgWin,  false, sym),    color: "var(--success)" },
+    { label: "Avg Loss",      val: formatCurrency(stats.avgLoss, false, sym),    color: "var(--danger)" },
+    { label: "Best Trade",    val: formatCurrency(stats.bestTrade,  false, sym), color: "var(--success)" },
+    { label: "Worst Trade",   val: formatCurrency(stats.worstTrade, false, sym), color: "var(--danger)" },
+  ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
       {/* Title */}
       <div>
-        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 20, letterSpacing: 2, color: t.text }}>{label}</div>
-        <div style={{ fontSize: 11, color: t.textDim }}>{stats.trades} trades · {stats.wins}W {stats.losses}L</div>
+        <h2 style={{ fontFamily: "var(--font-disp)", fontSize: 20, letterSpacing: 2, color: "var(--text)", fontWeight: 400 }}>
+          {periodLabel(key)}
+        </h2>
+        <p style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)", marginTop: 3 }}>
+          {stats.trades} trades · {stats.wins}W {stats.losses}L
+        </p>
       </div>
 
-      {/* Key stats */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 10 }}>
-        {[
-          { label: "Total P&L",     value: formatCurrency(stats.totalPnl, false, sym),  color: accent },
-          { label: "Win Rate",      value: `${stats.winRate.toFixed(1)}%`,               color: stats.winRate >= 50 ? "#00d4aa" : "#f59e0b" },
-          { label: "Profit Factor", value: stats.profitFactor >= 999 ? "∞" : stats.profitFactor.toFixed(2), color: stats.profitFactor >= 1 ? "#00d4aa" : "#ef4444" },
-          { label: "Avg R:R",       value: formatRR(stats.avgRR),                        color: stats.avgRR >= 1 ? "#00d4aa" : "#f59e0b" },
-          { label: "Avg Win",       value: formatCurrency(stats.avgWin,  false, sym),    color: "#00d4aa" },
-          { label: "Avg Loss",      value: formatCurrency(stats.avgLoss, false, sym),    color: "#ef4444" },
-          { label: "Best Trade",    value: formatCurrency(stats.bestTrade,  false, sym), color: "#00d4aa" },
-          { label: "Worst Trade",   value: formatCurrency(stats.worstTrade, false, sym), color: "#ef4444" },
-        ].map(s => (
-          <div key={s.label} className="stat-card" style={{ padding: "12px 14px" }}>
-            <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontSize: 15, fontWeight: 500, color: s.color }}>{s.value}</div>
+      {/* KPI grid */}
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4, 1fr)", gap: 8 }}>
+        {kpis.map(s => (
+          <div key={s.label} className="stat-card" style={{ padding: "10px 12px" }}>
+            <div className="kpi-label">{s.label}</div>
+            <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-lg)", fontWeight: 600, color: s.color, marginTop: 2 }}>{s.val}</div>
           </div>
         ))}
       </div>
 
-      {/* Daily P&L bar chart */}
+      {/* Daily P&L */}
       {dailyData.length > 1 && (
         <div className="stat-card">
-          <div style={{ fontSize: 10, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12 }}>Daily P&L</div>
+          <div className="section-label" style={{ marginBottom: 12 }}>Daily P&L</div>
           <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={dailyData} barSize={20}>
-              <CartesianGrid strokeDasharray="3 3" stroke={t.chartGrid} vertical={false} />
-              <XAxis dataKey="date" tick={{ fill: t.textDim, fontSize: 9, fontFamily: "DM Mono" }} tickLine={false} axisLine={false} />
-              <YAxis tick={{ fill: t.textDim, fontSize: 9, fontFamily: "DM Mono" }} tickLine={false} axisLine={false} tickFormatter={v => `${sym}${v}`} />
-              <Tooltip {...tooltipStyle} formatter={v => [formatCurrency(v, false, sym), "P&L"]} />
-              <ReferenceLine y={0} stroke={t.border} />
-              <Bar dataKey="pnl" radius={[3, 3, 0, 0]}>
-                {dailyData.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? "#00d4aa" : "#ef4444"} fillOpacity={0.8} />)}
+            <BarChart data={dailyData} barSize={18} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false}/>
+              <XAxis dataKey="date" tick={{ fill: "var(--text-dim)", fontSize: 9 }} tickLine={false} axisLine={false}/>
+              <YAxis tick={{ fill: "var(--text-dim)", fontSize: 9 }} tickLine={false} axisLine={false} width={40}/>
+              <Tooltip {...chartTip} formatter={v => [formatCurrency(v, false, sym), "P&L"]}/>
+              <ReferenceLine y={0} stroke="var(--border)"/>
+              <Bar dataKey="pnl" radius={[3,3,0,0]}>
+                {dailyData.map((d, i) => <Cell key={i} fill={d.pnl >= 0 ? "var(--success)" : "var(--danger)"} fillOpacity={0.85}/>)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -207,317 +192,276 @@ function DetailPanel({ period, sym, allTrades, theme: t }) {
       )}
 
       {/* Insights row */}
-      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 1fr 1fr", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5, 1fr)", gap: 8 }}>
         {[
-          { label: "Top Pair",     value: stats.topPair },
-          { label: "Top Strategy", value: stats.topStrategy },
-          { label: "Top Emotion",  value: stats.topEmotion },
+          { label: "Top Pair",       val: stats.topPair,     color: "var(--text)" },
+          { label: "Top Strategy",   val: stats.topStrategy, color: "var(--text)" },
+          { label: "Top Emotion",    val: stats.topEmotion,  color: "var(--text)" },
+          { label: "Max Win Streak", val: `${stats.maxWinStreak}x`,  color: "var(--success)" },
+          { label: "Max Loss Streak",val: `${stats.maxLossStreak}x`, color: "var(--danger)" },
         ].map(s => (
-          <div key={s.label} style={{ background: t.bgSubtle, border: `1px solid ${t.borderSubtle}`, borderRadius: 8, padding: "10px 14px" }}>
-            <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontSize: 13, color: t.text }}>{s.value}</div>
-          </div>
-        ))}
-        {[
-          { label: "Max Win Streak",  value: `${stats.maxWinStreak}x 🔥`,  color: "#00d4aa" },
-          { label: "Max Loss Streak", value: `${stats.maxLossStreak}x`,     color: "#ef4444" },
-        ].map(s => (
-          <div key={s.label} style={{ background: t.bgSubtle, border: `1px solid ${t.borderSubtle}`, borderRadius: 8, padding: "10px 14px" }}>
-            <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{s.label}</div>
-            <div style={{ fontSize: 13, color: s.color }}>{s.value}</div>
+          <div key={s.label} style={{ background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: "var(--r-md)", padding: "8px 12px" }}>
+            <div className="kpi-label">{s.label}</div>
+            <div style={{ fontSize: "var(--fs-base)", color: s.color, fontWeight: 500, marginTop: 2 }}>{s.val}</div>
           </div>
         ))}
       </div>
 
       {/* Trade list */}
       <div className="stat-card" style={{ padding: 0, overflow: "hidden" }}>
-        <div style={{ padding: "12px 16px", borderBottom: `1px solid ${t.border}`, fontSize: 10, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-          Trades
+        <div style={{ padding: "10px 16px", borderBottom: "1px solid var(--border)" }}>
+          <span className="section-label">Trades</span>
         </div>
         <div style={{ overflowX: "auto" }}>
-          <table className="trade-table">
+          <table className="data-table">
             <thead>
               <tr>
                 <th>Date</th><th>Pair</th><th>Side</th><th>Strategy</th>
-                <th>P&L</th><th>R:R</th><th>Emotion</th>
+                <th className="text-right">P&L</th><th className="text-right">R:R</th><th>Emotion</th>
               </tr>
             </thead>
             <tbody>
-              {sortedT.map(trade => (
-                <tr key={trade.id}>
-                  <td style={{ color: t.textDim, fontSize: 11 }}>{trade.date.slice(5)}</td>
-                  <td style={{ fontWeight: 500, color: t.text }}>{trade.pair}</td>
-                  <td><span className={`badge badge-${(trade.side ?? "").toLowerCase()}`}>{trade.side}</span></td>
-                  <td style={{ color: t.textMuted }}>{trade.strategy}</td>
-                  <td style={{ color: trade.pnl >= 0 ? "#00d4aa" : "#ef4444", fontWeight: 500 }}>
-                    {formatCurrency(trade.pnl, false, sym)}
+              {[...trades].sort((a, b) => new Date(b.date) - new Date(a.date)).map(tr => (
+                <tr key={tr.id}>
+                  <td style={{ color: "var(--text-dim)", fontFamily: "var(--font-mono)", fontSize: "var(--fs-xs)" }}>{tr.date.slice(5)}</td>
+                  <td style={{ fontWeight: 500, color: "var(--text)", fontFamily: "var(--font-mono)" }}>{tr.pair}</td>
+                  <td><span className={`badge ${tr.side === "BUY" ? "badge-green" : "badge-yellow"}`}>{tr.side}</span></td>
+                  <td style={{ color: "var(--text-muted)" }}>{tr.strategy}</td>
+                  <td className="text-right">
+                    <span style={{ fontFamily: "var(--font-mono)", fontWeight: 600, color: (tr.pnl ?? 0) >= 0 ? "var(--success)" : "var(--danger)" }}>
+                      {formatCurrency(tr.pnl ?? 0, false, sym)}
+                    </span>
                   </td>
-                  <td style={{ color: (trade.rr ?? 0) >= 0 ? "#00d4aa" : "#ef4444" }}>
-                    {formatRR(trade.rr ?? 0)}
+                  <td className="text-right mono" style={{ color: (tr.rr ?? 0) >= 1 ? "var(--success)" : "var(--warning)" }}>
+                    {formatRR(tr.rr ?? 0)}
                   </td>
-                  <td style={{ color: t.textDim, fontSize: 11 }}>{trade.emotion}</td>
+                  <td style={{ color: "var(--text-dim)", fontSize: "var(--fs-xs)" }}>{tr.emotion}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
   );
 }
 
-// ── Main Review Page ─────────────────────────────────────────────
-
-// ── Comparison helpers ────────────────────────────────────────────
+// ── Comparison Section ────────────────────────────────────────────
 function calcCompStats(trades) {
-  if (!trades || trades.length === 0) return null;
+  if (!trades?.length) return null;
   const wins      = trades.filter(tr => tr.pnl > 0);
   const losses    = trades.filter(tr => tr.pnl <= 0);
   const totalPnl  = trades.reduce((s, tr) => s + (tr.pnl || 0), 0);
   const grossWin  = wins.reduce((s, tr) => s + tr.pnl, 0);
   const grossLoss = Math.abs(losses.reduce((s, tr) => s + (tr.pnl || 0), 0));
-  const winRate   = trades.length > 0 ? (wins.length / trades.length) * 100 : 0;
-  const profitFactor = grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 999 : 0;
-  const avgRR     = trades.filter(tr => tr.rr).length > 0
-    ? trades.filter(tr => tr.rr).reduce((s, tr) => s + (tr.rr || 0), 0) / trades.filter(tr => tr.rr).length : 0;
-  const avgWin    = wins.length > 0 ? grossWin / wins.length : 0;
-  const avgLoss   = losses.length > 0 ? grossLoss / losses.length : 0;
-
-  // Equity curve
+  const rrTrades  = trades.filter(tr => tr.rr);
+  const avgRR     = rrTrades.length ? rrTrades.reduce((s, tr) => s + (tr.rr || 0), 0) / rrTrades.length : 0;
   let equity = 0;
   const curve = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date))
     .map((tr, i) => { equity += tr.pnl || 0; return { i: i + 1, equity }; });
-
-  return { totalTrades: trades.length, wins: wins.length, losses: losses.length,
-    winRate, totalPnl, profitFactor, avgRR, avgWin, avgLoss, grossWin, grossLoss, curve };
+  return {
+    totalTrades: trades.length, wins: wins.length, losses: losses.length,
+    winRate: trades.length ? (wins.length / trades.length) * 100 : 0,
+    totalPnl, profitFactor: grossLoss > 0 ? grossWin / grossLoss : grossWin > 0 ? 999 : 0,
+    avgRR, avgWin: wins.length ? grossWin / wins.length : 0,
+    avgLoss: losses.length ? grossLoss / losses.length : 0,
+    grossWin, grossLoss, curve,
+  };
 }
 
-function DeltaBadge({ val, formatFn, theme: t, higherIsBetter = true }) {
-  if (val === null || val === undefined || isNaN(val)) return <span style={{ color: t.textDim, fontSize: 11 }}>—</span>;
-  const positive = higherIsBetter ? val > 0 : val < 0;
-  const color    = val === 0 ? t.textDim : positive ? "#00c896" : "#ef4444";
-  const prefix   = val > 0 ? "▲ +" : val < 0 ? "▼ " : "";
-  return (
-    <span style={{ fontSize: 11, color, fontFamily: "DM Mono, monospace" }}>
-      {prefix}{formatFn ? formatFn(Math.abs(val)) : Math.abs(val).toFixed(2)}
-    </span>
-  );
-}
-
-function ComparisonSection({ trades, currencyMeta, theme: t }) {
+function ComparisonSection({ trades, currencyMeta }) {
   const { isMobile } = useBreakpoint();
   const sym = currencyMeta?.symbol ?? "$";
-
-  // Mode: month | strategy | custom
-  const [mode, setMode]   = useState("month");
+  const [mode,    setMode]    = useState("month");
   const [periodA, setPeriodA] = useState("");
   const [periodB, setPeriodB] = useState("");
 
-  // Get available months
   const months = useMemo(() => {
-    const map = new Set((trades || []).map(tr => tr.date?.slice(0, 7)).filter(Boolean));
-    return [...map].sort().reverse();
+    const s = new Set((trades || []).map(tr => tr.date?.slice(0,7)).filter(Boolean));
+    return [...s].sort().reverse();
   }, [trades]);
 
-  // Get available strategies
   const strategies = useMemo(() => {
-    const map = new Set((trades || []).map(tr => tr.strategy).filter(Boolean));
-    return [...map].sort();
+    const s = new Set((trades || []).map(tr => tr.strategy).filter(Boolean));
+    return [...s].sort();
   }, [trades]);
 
   const options = mode === "month" ? months : strategies;
 
-  // Auto-set defaults
   useMemo(() => {
-    if (options.length >= 2 && !periodA) {
-      setPeriodA(options[1]);
-      setPeriodB(options[0]);
-    }
+    if (options.length >= 2 && !periodA) { setPeriodA(options[1]); setPeriodB(options[0]); }
   }, [options]); // eslint-disable-line
 
-  // Filter trades
-  const tradesA = useMemo(() => {
-    if (!periodA) return [];
-    if (mode === "month")    return (trades || []).filter(tr => tr.date?.startsWith(periodA));
-    if (mode === "strategy") return (trades || []).filter(tr => tr.strategy === periodA);
-    return [];
-  }, [trades, periodA, mode]);
+  const filter = (p) => !p ? [] : mode === "month"
+    ? (trades || []).filter(tr => tr.date?.startsWith(p))
+    : (trades || []).filter(tr => tr.strategy === p);
 
-  const tradesB = useMemo(() => {
-    if (!periodB) return [];
-    if (mode === "month")    return (trades || []).filter(tr => tr.date?.startsWith(periodB));
-    if (mode === "strategy") return (trades || []).filter(tr => tr.strategy === periodB);
-    return [];
-  }, [trades, periodB, mode]);
+  const tradesA = useMemo(() => filter(periodA), [trades, periodA, mode]); // eslint-disable-line
+  const tradesB = useMemo(() => filter(periodB), [trades, periodB, mode]); // eslint-disable-line
+  const statsA  = useMemo(() => calcCompStats(tradesA), [tradesA]);
+  const statsB  = useMemo(() => calcCompStats(tradesB), [tradesB]);
 
-  const statsA = useMemo(() => calcCompStats(tradesA), [tradesA]);
-  const statsB = useMemo(() => calcCompStats(tradesB), [tradesB]);
-
-  const metrics = statsA && statsB ? [
-    { label: "Total Trades",   a: statsA.totalTrades, b: statsB.totalTrades, fmt: v => v, higher: true },
-    { label: "Win Rate",       a: statsA.winRate,     b: statsB.winRate,     fmt: v => v.toFixed(1) + "%", higher: true },
-    { label: "Total P&L",      a: statsA.totalPnl,    b: statsB.totalPnl,    fmt: v => sym + v.toFixed(0), higher: true },
-    { label: "Profit Factor",  a: statsA.profitFactor, b: statsB.profitFactor, fmt: v => v >= 999 ? "∞" : v.toFixed(2), higher: true },
-    { label: "Avg R:R",        a: statsA.avgRR,        b: statsB.avgRR,       fmt: v => v.toFixed(2), higher: true },
-    { label: "Avg Win",        a: statsA.avgWin,       b: statsB.avgWin,      fmt: v => sym + v.toFixed(0), higher: true },
-    { label: "Avg Loss",       a: statsA.avgLoss,      b: statsB.avgLoss,     fmt: v => sym + v.toFixed(0), higher: false },
-    { label: "Gross Profit",   a: statsA.grossWin,     b: statsB.grossWin,    fmt: v => sym + v.toFixed(0), higher: true },
-  ] : [];
-
-  // Combined equity curves
   const curveData = useMemo(() => {
     if (!statsA || !statsB) return [];
     const maxLen = Math.max(statsA.curve.length, statsB.curve.length);
     return Array.from({ length: maxLen }, (_, i) => ({
       i: i + 1,
-      A: statsA.curve[i]?.equity ?? statsA.curve[statsA.curve.length - 1]?.equity ?? 0,
-      B: statsB.curve[i]?.equity ?? statsB.curve[statsB.curve.length - 1]?.equity ?? 0,
+      A: statsA.curve[i]?.equity ?? statsA.curve.at(-1)?.equity ?? 0,
+      B: statsB.curve[i]?.equity ?? statsB.curve.at(-1)?.equity ?? 0,
     }));
   }, [statsA, statsB]);
 
-  const chartTooltip = {
-    contentStyle: { background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 8, fontSize: 11 },
-  };
+  const metrics = statsA && statsB ? [
+    { label: "Total Trades",  a: statsA.totalTrades,   b: statsB.totalTrades,   fmt: v => v,                              higher: true },
+    { label: "Win Rate",      a: statsA.winRate,        b: statsB.winRate,        fmt: v => `${v.toFixed(1)}%`,            higher: true },
+    { label: "Total P&L",     a: statsA.totalPnl,       b: statsB.totalPnl,       fmt: v => `${sym}${v.toFixed(0)}`,       higher: true },
+    { label: "Profit Factor", a: statsA.profitFactor,   b: statsB.profitFactor,   fmt: v => v >= 999 ? "∞" : v.toFixed(2), higher: true },
+    { label: "Avg R:R",       a: statsA.avgRR,          b: statsB.avgRR,          fmt: v => v.toFixed(2),                  higher: true },
+    { label: "Avg Win",       a: statsA.avgWin,         b: statsB.avgWin,         fmt: v => `${sym}${v.toFixed(0)}`,       higher: true },
+    { label: "Avg Loss",      a: statsA.avgLoss,        b: statsB.avgLoss,        fmt: v => `${sym}${v.toFixed(0)}`,       higher: false },
+    { label: "Gross Profit",  a: statsA.grossWin,       b: statsB.grossWin,       fmt: v => `${sym}${v.toFixed(0)}`,       higher: true },
+  ] : [];
 
   return (
-    <div style={{ marginTop: 28, paddingTop: 24, borderTop: `1px solid ${t.borderSubtle}` }}>
-      {/* Section header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20 }}>
-        <div style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${t.border})` }} />
-        <div style={{ fontSize: 9, color: t.accent, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 600 }}>
-          Performance Comparison
-        </div>
-        <div style={{ flex: 1, height: 1, background: `linear-gradient(270deg, transparent, ${t.border})` }} />
+    <div style={{ marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--border)" }}>
+      <div className="divider-with-label" style={{ marginBottom: 20 }}>
+        <span className="divider-label">Performance Comparison</span>
       </div>
 
-      {/* Mode selector */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ display: "flex", gap: 3, background: t.bgSubtle, border: `1px solid ${t.border}`, borderRadius: 8, padding: 3 }}>
-          {[{ v: "month", l: "📅 Bulan" }, { v: "strategy", l: "🎯 Strategi" }].map(m => (
-            <button key={m.v} onClick={() => { setMode(m.v); setPeriodA(""); setPeriodB(""); }}
-              style={{ padding: "5px 14px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 11, background: mode === m.v ? t.accent : "transparent", color: mode === m.v ? "#090e1a" : t.textDim, fontWeight: mode === m.v ? 600 : 400 }}>
-              {m.l}
-            </button>
+      {/* Mode + selectors */}
+      <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 2, background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: "var(--r-md)", padding: 2 }}>
+          {[{ v: "month", l: "Bulan" }, { v: "strategy", l: "Strategi" }].map(m => (
+            <button key={m.v} onClick={() => { setMode(m.v); setPeriodA(""); setPeriodB(""); }} style={{
+              padding: "5px 14px", borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
+              fontSize: "var(--fs-sm)",
+              background: mode === m.v ? "var(--accent)"    : "transparent",
+              color:      mode === m.v ? "var(--text-inverse)" : "var(--text-dim)",
+              fontWeight: mode === m.v ? 600 : 400,
+            }}>{m.l}</button>
           ))}
         </div>
-
-        {/* Period selectors */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center", flex: 1, flexWrap: "wrap" }}>
-          <select value={periodA} onChange={e => setPeriodA(e.target.value)}
-            style={{ background: "rgba(0,200,150,0.08)", border: "1px solid rgba(0,200,150,0.3)", color: "#00c896", borderRadius: 7, padding: "6px 10px", fontSize: 12, fontFamily: "DM Mono, monospace", cursor: "pointer" }}>
-            <option value="">— Periode A —</option>
-            {options.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-          <span style={{ color: t.textDim, fontSize: 13 }}>vs</span>
-          <select value={periodB} onChange={e => setPeriodB(e.target.value)}
-            style={{ background: "rgba(14,165,233,0.08)", border: "1px solid rgba(14,165,233,0.3)", color: "#0ea5e9", borderRadius: 7, padding: "6px 10px", fontSize: 12, fontFamily: "DM Mono, monospace", cursor: "pointer" }}>
-            <option value="">— Periode B —</option>
-            {options.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </div>
+        <select value={periodA} onChange={e => setPeriodA(e.target.value)} style={{
+          background: "var(--success-dim)", border: "1px solid var(--success)",
+          color: "var(--success)", borderRadius: "var(--r-md)", padding: "6px 10px",
+          fontSize: "var(--fs-sm)", fontFamily: "var(--font-mono)", cursor: "pointer",
+        }}>
+          <option value="">— Periode A —</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+        <span style={{ color: "var(--text-dim)", fontSize: "var(--fs-base)" }}>vs</span>
+        <select value={periodB} onChange={e => setPeriodB(e.target.value)} style={{
+          background: "var(--accent2-dim)", border: "1px solid var(--accent2)",
+          color: "var(--accent2)", borderRadius: "var(--r-md)", padding: "6px 10px",
+          fontSize: "var(--fs-sm)", fontFamily: "var(--font-mono)", cursor: "pointer",
+        }}>
+          <option value="">— Periode B —</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
       </div>
 
       {(!periodA || !periodB) ? (
-        <div style={{ textAlign: "center", padding: "32px 24px", color: t.textDim, fontSize: 13 }}>
-          Pilih dua periode untuk dibandingkan
-        </div>
+        <div className="empty-state"><div className="empty-desc">Pilih dua periode untuk dibandingkan</div></div>
       ) : (!statsA || !statsB) ? (
-        <div style={{ textAlign: "center", padding: "32px 24px", color: t.textDim, fontSize: 13 }}>
-          Tidak ada trade untuk salah satu periode
-        </div>
+        <div className="empty-state"><div className="empty-desc">Tidak ada trade untuk salah satu periode</div></div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* Summary header */}
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 60px 1fr", gap: 10, alignItems: "center" }}>
-            <div style={{ background: "rgba(0,200,150,0.06)", border: "1px solid rgba(0,200,150,0.2)", borderRadius: 10, padding: "14px 16px", textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: "#00c896", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>A — {periodA}</div>
-              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 22, color: statsA.totalPnl >= 0 ? "#00c896" : "#ef4444", fontWeight: 700 }}>
-                {statsA.totalPnl >= 0 ? "+" : ""}{sym}{statsA.totalPnl.toFixed(0)}
-              </div>
-              <div style={{ fontSize: 11, color: t.textDim, marginTop: 4 }}>{statsA.totalTrades} trades · {statsA.winRate.toFixed(0)}% WR</div>
-            </div>
-            {!isMobile && <div style={{ textAlign: "center", fontSize: 18, color: t.textDim }}>⇆</div>}
-            <div style={{ background: "rgba(14,165,233,0.06)", border: "1px solid rgba(14,165,233,0.2)", borderRadius: 10, padding: "14px 16px", textAlign: "center" }}>
-              <div style={{ fontSize: 9, color: "#0ea5e9", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>B — {periodB}</div>
-              <div style={{ fontFamily: "DM Mono, monospace", fontSize: 22, color: statsB.totalPnl >= 0 ? "#00c896" : "#ef4444", fontWeight: 700 }}>
-                {statsB.totalPnl >= 0 ? "+" : ""}{sym}{statsB.totalPnl.toFixed(0)}
-              </div>
-              <div style={{ fontSize: 11, color: t.textDim, marginTop: 4 }}>{statsB.totalTrades} trades · {statsB.winRate.toFixed(0)}% WR</div>
-            </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {/* Summary cards */}
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr 40px 1fr", gap: 10, alignItems: "center" }}>
+            {[
+              { label: `A — ${periodA}`, s: statsA, color: "var(--success)",  bg: "var(--success-dim)",  border: "var(--success)" },
+              { label: `B — ${periodB}`, s: statsB, color: "var(--accent2)",  bg: "var(--accent2-dim)",  border: "var(--accent2)" },
+            ].map((item, idx) => (
+              <>
+                {idx === 1 && !isMobile && (
+                  <div key="vs" style={{ textAlign: "center", fontSize: 18, color: "var(--text-dim)" }}>⇆</div>
+                )}
+                <div key={item.label} style={{ background: item.bg, border: `1px solid ${item.border}`, borderRadius: "var(--r-lg)", padding: "14px 16px", textAlign: "center" }}>
+                  <div style={{ fontSize: "var(--fs-2xs)", color: item.color, textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: 6 }}>{item.label}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: "var(--fs-2xl)", color: item.s.totalPnl >= 0 ? "var(--success)" : "var(--danger)", fontWeight: 700 }}>
+                    {item.s.totalPnl >= 0 ? "+" : ""}{sym}{item.s.totalPnl.toFixed(0)}
+                  </div>
+                  <div style={{ fontSize: "var(--fs-xs)", color: "var(--text-dim)", marginTop: 4 }}>
+                    {item.s.totalTrades} trades · {item.s.winRate.toFixed(0)}% WR
+                  </div>
+                </div>
+              </>
+            ))}
           </div>
 
-          {/* Equity curve comparison */}
+          {/* Equity comparison */}
           {curveData.length > 0 && (
             <div className="stat-card">
-              <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 600, marginBottom: 14 }}>Equity Curve Comparison</div>
+              <div className="section-label" style={{ marginBottom: 12 }}>Equity Curve Comparison</div>
               <ResponsiveContainer width="100%" height={160}>
-                <LineChart data={curveData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={t.chartGrid} vertical={false} />
-                  <XAxis dataKey="i" tick={{ fill: t.textDim, fontSize: 9 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: t.textDim, fontSize: 9 }} tickLine={false} axisLine={false} tickFormatter={v => `${sym}${v >= 1000 ? (v/1000).toFixed(0)+"k" : v.toFixed(0)}`} width={44} />
-                  <Tooltip {...chartTooltip} formatter={(v, name) => [`${sym}${v.toFixed(0)}`, name === "A" ? periodA : periodB]} />
-                  <ReferenceLine y={0} stroke={t.border} strokeDasharray="4 4" />
-                  <Line type="monotone" dataKey="A" stroke="#00c896" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="B" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                <LineChart data={curveData} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false}/>
+                  <XAxis dataKey="i" tick={{ fill: "var(--text-dim)", fontSize: 9 }} tickLine={false} axisLine={false}/>
+                  <YAxis tick={{ fill: "var(--text-dim)", fontSize: 9 }} tickLine={false} axisLine={false}
+                    tickFormatter={v => `${sym}${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v.toFixed(0)}`} width={44}/>
+                  <Tooltip {...chartTip} formatter={(v, name) => [`${sym}${v.toFixed(0)}`, name === "A" ? periodA : periodB]}/>
+                  <ReferenceLine y={0} stroke="var(--border)" strokeDasharray="4 4"/>
+                  <Line type="monotone" dataKey="A" stroke="var(--success)" strokeWidth={2} dot={false}/>
+                  <Line type="monotone" dataKey="B" stroke="var(--accent2)"  strokeWidth={2} dot={false}/>
                 </LineChart>
               </ResponsiveContainer>
             </div>
           )}
 
-          {/* Metrics comparison table */}
+          {/* Metrics table */}
           <div className="stat-card">
-            <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 600, marginBottom: 14 }}>Perbandingan Metrik</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-              {/* Header */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 80px 1fr", gap: 8, padding: "6px 0", marginBottom: 4 }}>
-                <div style={{ fontSize: 9, color: t.textDim }}>Metrik</div>
-                <div style={{ fontSize: 9, color: "#00c896", textAlign: "right" }}>A — {periodA}</div>
-                <div style={{ fontSize: 9, color: t.textDim, textAlign: "center" }}>Delta</div>
-                <div style={{ fontSize: 9, color: "#0ea5e9", textAlign: "right" }}>B — {periodB}</div>
-              </div>
-              {metrics.map(m => {
-                const delta = m.b - m.a;
-                const aWins = m.higher ? m.a > m.b : m.a < m.b;
-                const bWins = m.higher ? m.b > m.a : m.b < m.a;
-                return (
-                  <div key={m.label} style={{ display: "grid", gridTemplateColumns: "1fr 1fr 80px 1fr", gap: 8, padding: "9px 0", borderBottom: `1px solid ${t.borderSubtle}`, alignItems: "center" }}>
-                    <div style={{ fontSize: 11, color: t.textMuted }}>{m.label}</div>
-                    <div style={{ fontSize: 13, fontFamily: "DM Mono, monospace", color: aWins ? "#00c896" : t.text, fontWeight: aWins ? 600 : 400, textAlign: "right" }}>
-                      {m.fmt(m.a)}
-                    </div>
-                    <div style={{ textAlign: "center" }}>
-                      <DeltaBadge val={delta} formatFn={v => m.fmt(v)} theme={t} higherIsBetter={m.higher} />
-                    </div>
-                    <div style={{ fontSize: 13, fontFamily: "DM Mono, monospace", color: bWins ? "#0ea5e9" : t.text, fontWeight: bWins ? 600 : 400, textAlign: "right" }}>
-                      {m.fmt(m.b)}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+            <div className="section-label" style={{ marginBottom: 12 }}>Perbandingan Metrik</div>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Metrik</th>
+                  <th className="text-right" style={{ color: "var(--success)" }}>A — {periodA}</th>
+                  <th className="text-center">Delta</th>
+                  <th className="text-right" style={{ color: "var(--accent2)" }}>B — {periodB}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.map(m => {
+                  const delta = m.b - m.a;
+                  const aWins = m.higher ? m.a > m.b : m.a < m.b;
+                  const bWins = m.higher ? m.b > m.a : m.b < m.a;
+                  const dColor = delta === 0 ? "var(--text-dim)" : (m.higher ? delta > 0 : delta < 0) ? "var(--success)" : "var(--danger)";
+                  return (
+                    <tr key={m.label}>
+                      <td style={{ color: "var(--text-muted)" }}>{m.label}</td>
+                      <td className="text-right" style={{ fontFamily: "var(--font-mono)", color: aWins ? "var(--success)" : "var(--text)", fontWeight: aWins ? 600 : 400 }}>
+                        {m.fmt(m.a)}
+                      </td>
+                      <td className="text-center">
+                        <span style={{ fontSize: "var(--fs-xs)", color: dColor, fontFamily: "var(--font-mono)" }}>
+                          {delta > 0 ? "▲" : delta < 0 ? "▼" : "—"} {delta !== 0 ? m.fmt(Math.abs(delta)) : ""}
+                        </span>
+                      </td>
+                      <td className="text-right" style={{ fontFamily: "var(--font-mono)", color: bWins ? "var(--accent2)" : "var(--text)", fontWeight: bWins ? 600 : 400 }}>
+                        {m.fmt(m.b)}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
 
-          {/* Highlight differences */}
-          <div style={{ background: "rgba(0,200,150,0.04)", border: "1px solid rgba(0,200,150,0.15)", borderRadius: 12, padding: "14px 18px" }}>
-            <div style={{ fontSize: 11, color: t.accent, fontWeight: 500, marginBottom: 10 }}>💡 Insight Perbandingan</div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* Insights */}
+          <div style={{ background: "var(--success-dim)", border: "1px solid var(--success)", borderRadius: "var(--r-lg)", padding: "14px 16px" }}>
+            <div style={{ fontSize: "var(--fs-sm)", color: "var(--success)", fontWeight: 500, marginBottom: 8 }}>💡 Insight</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
               {[
-                statsB.winRate - statsA.winRate > 5 ? `Win rate meningkat ${(statsB.winRate - statsA.winRate).toFixed(1)}% dari ${periodA} ke ${periodB} — bagus!` : null,
-                statsA.winRate - statsB.winRate > 5 ? `Win rate turun ${(statsA.winRate - statsB.winRate).toFixed(1)}% dari ${periodA} ke ${periodB} — perlu evaluasi` : null,
-                statsB.totalPnl > statsA.totalPnl ? `P&L lebih baik di ${periodB} (+${sym}${(statsB.totalPnl - statsA.totalPnl).toFixed(0)} selisih)` : null,
-                statsA.totalPnl > statsB.totalPnl ? `P&L lebih baik di ${periodA} (+${sym}${(statsA.totalPnl - statsB.totalPnl).toFixed(0)} selisih)` : null,
-                statsB.avgRR - statsA.avgRR > 0.2 ? `R:R membaik di ${periodB} (+${(statsB.avgRR - statsA.avgRR).toFixed(2)})` : null,
-                statsA.avgRR - statsB.avgRR > 0.2 ? `R:R lebih baik di ${periodA} (+${(statsA.avgRR - statsB.avgRR).toFixed(2)})` : null,
+                statsB.winRate - statsA.winRate > 5  ? `Win rate naik ${(statsB.winRate - statsA.winRate).toFixed(1)}% dari ${periodA} ke ${periodB}` : null,
+                statsA.winRate - statsB.winRate > 5  ? `Win rate turun ${(statsA.winRate - statsB.winRate).toFixed(1)}% — perlu evaluasi` : null,
+                statsB.totalPnl > statsA.totalPnl    ? `P&L lebih baik di ${periodB} (+${sym}${(statsB.totalPnl - statsA.totalPnl).toFixed(0)} selisih)` : null,
+                statsA.totalPnl > statsB.totalPnl    ? `P&L lebih baik di ${periodA} (+${sym}${(statsA.totalPnl - statsB.totalPnl).toFixed(0)} selisih)` : null,
+                statsB.avgRR - statsA.avgRR > 0.2    ? `R:R membaik di ${periodB} (+${(statsB.avgRR - statsA.avgRR).toFixed(2)})` : null,
               ].filter(Boolean).map((tip, i) => (
-                <div key={i} style={{ fontSize: 12, color: t.textMuted, display: "flex", gap: 8 }}>
-                  <span style={{ color: t.accent, flexShrink: 0 }}>→</span>{tip}
+                <div key={i} style={{ fontSize: "var(--fs-sm)", color: "var(--text-muted)", display: "flex", gap: 8 }}>
+                  <span style={{ color: "var(--accent)", flexShrink: 0 }}>→</span>{tip}
                 </div>
               ))}
-              {[statsB.winRate - statsA.winRate, statsA.winRate - statsB.winRate, statsB.totalPnl - statsA.totalPnl].every(d => Math.abs(d) < 5) && (
-                <div style={{ fontSize: 12, color: t.textDim }}>Performa kedua periode relatif mirip — tidak ada perbedaan signifikan</div>
-              )}
             </div>
           </div>
         </div>
@@ -526,90 +470,70 @@ function ComparisonSection({ trades, currencyMeta, theme: t }) {
   );
 }
 
+// ── Main Review ───────────────────────────────────────────────────
 export default function Review({ trades, currencyMeta, theme }) {
-  const t   = theme;
   const sym = currencyMeta?.symbol ?? "$";
-
   const { isMobile } = useBreakpoint();
   const [mode,     setMode]     = useState("monthly");
   const [selected, setSelected] = useState(0);
 
-  const periods = useMemo(() => groupTradesByPeriod(trades, mode), [trades, mode]);
+  const periods = useMemo(() => groupByPeriod(trades, mode), [trades, mode]);
 
-  // Auto-select first period on mode change
-  const handleMode = m => { setMode(m); setSelected(0); };
-
-  if (!trades.length) {
-    return (
-      <div style={{ textAlign: "center", padding: "80px 0", color: t.textDim }}>
-        <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-        <div style={{ fontSize: 14 }}>Belum ada trade untuk direview.</div>
+  if (!trades?.length) return (
+    <div>
+      <h1 className="page-title" style={{ marginBottom: 20 }}>Review</h1>
+      <div className="stat-card">
+        <div className="empty-state">
+          <div className="empty-icon">📋</div>
+          <div className="empty-title">Belum ada trade</div>
+          <div className="empty-desc">Log beberapa trade untuk melihat review performa</div>
+        </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   return (
     <div>
       {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
         <div>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: 2, color: t.text }}>REVIEW</div>
-          <div style={{ fontSize: 11, color: t.textDim }}>Analisis performa per periode</div>
+          <h1 className="page-title">Review</h1>
+          <p className="page-subtitle">Analisis performa per periode</p>
         </div>
         {/* Mode toggle */}
-        <div style={{ display: "flex", background: t.bgSubtle, borderRadius: 10, padding: 3, border: `1px solid ${t.border}` }}>
-          {[["weekly", "Weekly"], ["monthly", "Monthly"]].map(([m, label]) => (
-            <button key={m} onClick={() => handleMode(m)} style={{
-              padding: "7px 20px", borderRadius: 8, border: "none", cursor: "pointer",
-              background:  mode === m ? t.bgCard : "transparent",
-              color:       mode === m ? t.text   : t.textDim,
-              fontFamily: "DM Mono, monospace", fontSize: 12,
-              fontWeight:  mode === m ? 500 : 400,
-              boxShadow:   mode === m ? "0 1px 4px rgba(0,0,0,0.15)" : "none",
-              transition: "all 0.15s",
-            }}>
-              {label}
-            </button>
+        <div style={{ display: "flex", gap: 2, background: "var(--bg-subtle)", border: "1px solid var(--border)", borderRadius: "var(--r-md)", padding: 2 }}>
+          {[["weekly","Weekly"],["monthly","Monthly"]].map(([m, label]) => (
+            <button key={m} onClick={() => { setMode(m); setSelected(0); }} style={{
+              padding: "6px 18px", borderRadius: "var(--r-sm)", border: "none", cursor: "pointer",
+              background: mode === m ? "var(--bg-card)" : "transparent",
+              color:      mode === m ? "var(--text)"    : "var(--text-dim)",
+              fontSize: "var(--fs-sm)", fontWeight: mode === m ? 500 : 400,
+              boxShadow:  mode === m ? "var(--shadow-sm)" : "none",
+              transition: "all var(--t-base)",
+            }}>{label}</button>
           ))}
         </div>
       </div>
 
       {periods.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 60, color: t.textDim }}>Tidak ada data.</div>
+        <div style={{ textAlign: "center", padding: 60, color: "var(--text-dim)" }}>Tidak ada data.</div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "280px 1fr", gap: 20, alignItems: "start" }}>
-
-          {/* Left — period list */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: isMobile ? "40vh" : "80vh", overflowY: "auto", paddingRight: 4 }}>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "260px 1fr", gap: 16, alignItems: "start" }}>
+          {/* Period list */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: isMobile ? "40vh" : "80vh", overflowY: "auto", paddingRight: 2 }}>
             {periods.map((p, i) => (
-              <PeriodCard
-                key={p.key}
-                period={p}
-                sym={sym}
-                isSelected={i === selected}
-                onClick={() => setSelected(i)}
-                theme={t}
-              />
+              <PeriodCard key={p.key} period={p} sym={sym} isSelected={i === selected} onClick={() => setSelected(i)}/>
             ))}
           </div>
-
-          {/* Right — detail */}
+          {/* Detail */}
           <div>
-            {periods[selected] && (
-              <DetailPanel
-                period={periods[selected]}
-                sym={sym}
-                allTrades={trades}
-                theme={t}
-              />
-            )}
+            {periods[selected] && <DetailPanel period={periods[selected]} sym={sym}/>}
           </div>
         </div>
       )}
 
-
-      {/* ── Performance Comparison ─── */}
-      <ComparisonSection trades={trades} currencyMeta={currencyMeta} theme={t} />
+      {/* Comparison */}
+      <ComparisonSection trades={trades} currencyMeta={currencyMeta}/>
     </div>
   );
 }
