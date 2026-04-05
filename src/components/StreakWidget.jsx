@@ -26,25 +26,25 @@ export default function StreakWidget({ streakData, onNavigate, theme: t }) {
       {/* Streak count */}
       <div style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={{ fontFamily: "DM Mono, monospace", fontSize: 26, fontWeight: 700, color: flameColor, lineHeight: 1 }}>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 26, fontWeight: 700, color: flameColor, lineHeight: 1 }}>
             {currentStreak}
           </span>
-          <span style={{ fontSize: 11, color: t.textDim }}>hari streak</span>
+          <span style={{ fontSize: 11, color: "var(--text-dim)" }}>hari streak</span>
         </div>
         {streakAtRisk && (
-          <div style={{ fontSize: 10, color: "#ef4444", marginTop: 2 }}>Selesaikan 1 trade atau jurnal hari ini!</div>
+          <div style={{ fontSize: 10, color: "var(--danger)", marginTop: 2 }}>Selesaikan 1 trade atau jurnal hari ini!</div>
         )}
         {!streakAtRisk && todayActive && (
-          <div style={{ fontSize: 10, color: "#00c896", marginTop: 2 }}>✓ Streak aman hari ini</div>
+          <div style={{ fontSize: 10, color: "var(--accent)", marginTop: 2 }}>✓ Streak aman hari ini</div>
         )}
       </div>
 
       {/* Weekly progress */}
       <div style={{ textAlign: "center", flexShrink: 0 }}>
-        <div style={{ fontSize: 10, color: t.textDim, marginBottom: 4 }}>
+        <div style={{ fontSize: 10, color: "var(--text-dim)", marginBottom: 4 }}>
           {weeklyActiveDays}/{weeklyGoal} minggu ini
         </div>
-        <div style={{ width: 60, height: 4, background: t.bgSubtle, borderRadius: 2, overflow: "hidden" }}>
+        <div style={{ width: 60, height: 4, background: "var(--bg-subtle)", borderRadius: 2, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${weeklyProgress}%`, background: "#00c896", borderRadius: 2, transition: "width 0.5s" }} />
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function StreakWidget({ streakData, onNavigate, theme: t }) {
       {freezesLeft > 0 && (
         <div style={{ textAlign: "center", flexShrink: 0 }}>
           <div style={{ fontSize: 18 }}>🧊</div>
-          <div style={{ fontSize: 9, color: t.textDim }}>{freezesLeft}x freeze</div>
+          <div style={{ fontSize: 9, color: "var(--text-dim)" }}>{freezesLeft}x freeze</div>
         </div>
       )}
     </div>

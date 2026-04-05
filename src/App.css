@@ -505,7 +505,7 @@ body {
   letter-spacing: 0.01em;
 }
 
-.section-label {
+.section-label, .field-label {
   font-size: var(--fs-2xs);
   color: var(--text-dim);
   text-transform: uppercase;
@@ -541,7 +541,7 @@ body {
 /* ══════════════════════════════════════════════════════════════════
    FORM ELEMENTS
    ══════════════════════════════════════════════════════════════════ */
-label {
+label, .field-label {
   display: block;
   font-size: var(--fs-xs);
   color: var(--text-dim);
@@ -918,7 +918,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   margin: var(--sp-4) 0;
 }
 
-.divider-with-label {
+.divider-with-label, .field-label {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -931,7 +931,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
   height: 1px;
   background: var(--border);
 }
-.divider-label {
+.divider-label, .field-label {
   font-size: var(--fs-2xs);
   color: var(--text-dim);
   text-transform: uppercase;
@@ -1001,7 +1001,7 @@ button { font-family: var(--font-ui); cursor: pointer; }
 }
 .kpi-card:hover { border-color: var(--text-dim); }
 
-.kpi-label {
+.kpi-label, .field-label {
   font-size: var(--fs-2xs);
   color: var(--text-dim);
   text-transform: uppercase;

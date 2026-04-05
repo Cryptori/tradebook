@@ -20,7 +20,7 @@ function Avatar({ initials, color, size = 28 }) {
       background: `linear-gradient(135deg, ${color}, ${color}99)`,
       display: "flex", alignItems: "center", justifyContent: "center",
       fontSize: size * 0.4, fontWeight: 700, color: "#fff", flexShrink: 0,
-      fontFamily: "DM Mono, monospace",
+      fontFamily: "var(--font-mono)",
     }}>
       {initials}
     </div>
@@ -39,30 +39,30 @@ export default function UserMenu({ user, profile, onSignOut, theme }) {
   return (
     <div style={{ position: "relative" }}>
       <button onClick={() => setOpen(o => !o)}
-        style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: `1px solid ${t.border}`, borderRadius: 20, padding: "4px 12px 4px 4px", cursor: "pointer" }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = t.accent; }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = t.border; }}>
+        style={{ display: "flex", alignItems: "center", gap: 8, background: "transparent", border: "1px solid var(--border)", borderRadius: 20, padding: "4px 12px 4px 4px", cursor: "pointer" }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = "var(--border)"; }}>
         <Avatar initials={initials} color={avatarColor} />
-        <span style={{ fontSize: 12, color: t.text, fontFamily: "DM Mono, monospace", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: 12, color: "var(--text)", fontFamily: "var(--font-mono)", maxWidth: 100, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {displayName}
         </span>
-        <span style={{ fontSize: 10, color: t.textDim }}>▾</span>
+        <span style={{ fontSize: 10, color: "var(--text-dim)" }}>▾</span>
       </button>
 
       {open && (
         <>
-          <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: t.bgCard, border: `1px solid ${t.border}`, borderRadius: 12, minWidth: 200, zIndex: 100, boxShadow: "0 8px 32px rgba(0,0,0,0.25)", overflow: "hidden" }}>
-            <div style={{ padding: "14px 16px", borderBottom: `1px solid ${t.border}`, display: "flex", gap: 10, alignItems: "center" }}>
+          <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, minWidth: 200, zIndex: 100, boxShadow: "0 8px 32px rgba(0,0,0,0.25)", overflow: "hidden" }}>
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border)", display: "flex", gap: 10, alignItems: "center" }}>
               <Avatar initials={initials} color={avatarColor} size={36} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: t.text, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
-                <div style={{ fontSize: 10, color: t.textDim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
+                <div style={{ fontSize: 13, color: "var(--text)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayName}</div>
+                <div style={{ fontSize: 10, color: "var(--text-dim)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.email}</div>
               </div>
             </div>
             <div style={{ padding: "6px 0" }}>
               <button
                 onClick={() => { setOpen(false); onSignOut(); }}
-                style={{ width: "100%", padding: "10px 16px", background: "none", border: "none", color: "#ef4444", fontFamily: "DM Mono, monospace", fontSize: 12, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}
+                style={{ width: "100%", padding: "10px 16px", background: "none", border: "none", color: "var(--danger)", fontFamily: "var(--font-mono)", fontSize: 12, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 8 }}
                 onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "none"; }}>
                 <span>⏏</span> Logout

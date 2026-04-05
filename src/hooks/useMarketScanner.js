@@ -28,25 +28,42 @@ function getCurrentSession() {
   return "Asian";
 }
 
-// Fetch price from free API (Frankfurter for forex, CoinGecko for crypto)
+// Fetch price — uses ExchangeRate-API (CORS-friendly, no key needed)
+// Cached per session to avoid rate limits
+const _rateCache = {};
 async function fetchPrice(symbol) {
   const s = symbol.replace("/", "").toUpperCase();
   try {
-    // Crypto - skip live price (API often blocked)
-    const cryptoSymbols = ["BTCUSD","ETHUSD","XRPUSD","SOLUSD","ADAUSD","BNBUSD"];
-    if (cryptoSymbols.includes(s)) {
-      return null; // Crypto prices require API key or proxy
-    }
-
-    // Forex via Frankfurter (free, no key needed)
-    const forexMap = { EURUSD: ["EUR","USD"], GBPUSD: ["GBP","USD"], USDJPY: ["USD","JPY"],
-                       AUDUSD: ["AUD","USD"], USDCAD: ["USD","CAD"], USDCHF: ["USD","CHF"],
-                       NZDUSD: ["NZD","USD"] };
+    // Forex pairs — use open.er-api.com (free, supports CORS)
+    const forexMap = {
+      EURUSD: ["EUR","USD"], GBPUSD: ["GBP","USD"], USDJPY: ["USD","JPY"],
+      AUDUSD: ["AUD","USD"], USDCAD: ["USD","CAD"], USDCHF: ["USD","CHF"],
+      NZDUSD: ["NZD","USD"], EURGBP: ["EUR","GBP"], EURJPY: ["EUR","JPY"],
+      GBPJPY: ["GBP","JPY"], XAUUSD: ["XAU","USD"],
+    };
     if (forexMap[s]) {
       const [base, quote] = forexMap[s];
-      const r = await fetch(`https://api.frankfurter.app/latest?from=${base}&to=${quote}`);
-      const d = await r.json();
-      if (d.rates?.[quote]) return { price: d.rates[quote], change24h: null };
+      // Cache key per base currency (fetch once, get all rates)
+      if (!_rateCache[base]) {
+        const r = await fetch(`https://open.er-api.com/v6/latest/${base}`);
+        if (!r.ok) return null;
+        const d = await r.json();
+        if (d.result === "success") _rateCache[base] = d.rates;
+      }
+      const rate = _rateCache[base]?.[quote];
+      if (rate) return { price: rate, change24h: null, lastUpdated: new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) };
+    }
+
+    // Gold (XAU) — approximate via metals-api fallback
+    if (s === "XAUUSD") {
+      if (!_rateCache["XAU"]) {
+        const r = await fetch("https://open.er-api.com/v6/latest/USD");
+        if (!r.ok) return null;
+        const d = await r.json();
+        if (d.result === "success") _rateCache["XAU"] = d.rates;
+      }
+      const xauRate = _rateCache["XAU"]?.["XAU"];
+      if (xauRate) return { price: parseFloat((1 / xauRate).toFixed(2)), change24h: null };
     }
   } catch {}
   return null;

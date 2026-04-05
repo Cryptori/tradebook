@@ -25,7 +25,7 @@ export default function TagSelector({ tags = [], onChange, theme }) {
 
   return (
     <div>
-      <label style={{ color: t.textDim }}>Tags</label>
+      <label style={{ color: "var(--text-dim)" }}>Tags</label>
 
       {/* Selected tags */}
       {tags.length > 0 && (
@@ -50,9 +50,9 @@ export default function TagSelector({ tags = [], onChange, theme }) {
           return (
             <span key={tag.label} onClick={() => toggleTag(tag.label)}
               style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, cursor: "pointer", transition: "all 0.15s",
-                background: active ? `${tag.color}20` : t.bgSubtle,
-                border: `1px solid ${active ? tag.color : t.border}`,
-                color: active ? tag.color : t.textDim,
+                background: active ? `${tag.color}20` : "var(--bg-subtle)",
+                border: `1px solid ${active ? tag.color : "var(--border)"}`,
+                color: active ? tag.color : "var(--text-dim)",
               }}>
               {tag.label}
             </span>
@@ -60,7 +60,7 @@ export default function TagSelector({ tags = [], onChange, theme }) {
         })}
         {PRESET_TAGS.length > VISIBLE_COUNT && (
           <span onClick={() => setShowAll(s => !s)}
-            style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, cursor: "pointer", background: t.bgSubtle, border: `1px solid ${t.border}`, color: t.textDim }}>
+            style={{ padding: "3px 10px", borderRadius: 20, fontSize: 11, cursor: "pointer", background: "var(--bg-subtle)", border: "1px solid var(--border)", color: "var(--text-dim)" }}>
             {showAll ? "less ▲" : `+${PRESET_TAGS.length - VISIBLE_COUNT} more`}
           </span>
         )}
@@ -72,10 +72,10 @@ export default function TagSelector({ tags = [], onChange, theme }) {
           onChange={e => setCustom(e.target.value)}
           onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addCustom())}
           placeholder="Tag custom..."
-          style={{ flex: 1, background: t.bgInput, border: `1px solid ${t.border}`, color: t.text, borderRadius: 8, padding: "7px 10px", fontFamily: "DM Mono, monospace", fontSize: 12, outline: "none" }}
+          style={{ flex: 1, background: "var(--bg-input)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "7px 10px", fontFamily: "var(--font-mono)", fontSize: 12, outline: "none" }}
         />
         <button onClick={addCustom}
-          style={{ padding: "7px 12px", background: t.bgSubtle, border: `1px solid ${t.border}`, color: t.textMuted, borderRadius: 8, cursor: "pointer", fontSize: 12, fontFamily: "DM Mono, monospace" }}>
+          style={{ padding: "7px 12px", background: "var(--bg-subtle)", border: "1px solid var(--border)", color: "var(--text-muted)", borderRadius: 8, cursor: "pointer", fontSize: 12, fontFamily: "var(--font-mono)" }}>
           + Add
         </button>
       </div>

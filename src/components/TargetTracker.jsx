@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useBreakpoint } from "../hooks/useBreakpoint";
 import { formatCurrency, formatPct } from "../utils/formatters";
 
 // ── Ring progress (SVG) ──────────────────────────────────────────
@@ -39,20 +40,20 @@ function TargetRow({ label, current, target, pct, color, currentLabel, targetLab
       </Ring>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <span style={{ fontSize: 11, color: t.text }}>{label}</span>
-          {done && <span style={{ fontSize: 10, color: "#00d4aa" }}>Tercapai! 🎯</span>}
+          <span style={{ fontSize: 11, color: "var(--text)" }}>{label}</span>
+          {done && <span style={{ fontSize: 10, color: "var(--accent)" }}>Tercapai! 🎯</span>}
         </div>
         <div style={{ background: "var(--border-subtle)", borderRadius: 4, height: 5, overflow: "hidden" }}>
           <div style={{
             height: "100%", borderRadius: 4,
-            width: `${clampedPct}%`,
+            width: "${clampedPct}%",
             background: done ? "#00d4aa" : color,
             transition: "width 0.6s ease",
           }} />
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
-          <span style={{ fontSize: 10, color: t.textDim }}>{currentLabel}</span>
-          <span style={{ fontSize: 10, color: t.textDim }}>Target: {targetLabel}</span>
+          <span style={{ fontSize: 10, color: "var(--text-dim)" }}>{currentLabel}</span>
+          <span style={{ fontSize: 10, color: "var(--text-dim)" }}>Target: {targetLabel}</span>
         </div>
       </div>
     </div>
@@ -63,6 +64,7 @@ function TargetRow({ label, current, target, pct, color, currentLabel, targetLab
 export default function TargetTracker({ stats, settings, currencyMeta, theme }) {
   const t   = theme;
   const sym = currencyMeta?.symbol ?? "$";
+  const { isMobile } = useBreakpoint();
 
   const capital     = settings?.capitalInitial     ?? 10000;
   const targetPPct  = settings?.targetProfitPct    ?? 20;
@@ -93,8 +95,8 @@ export default function TargetTracker({ stats, settings, currencyMeta, theme }) 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div>
-          <div style={{ fontSize: 11, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em" }}>Target Tracker</div>
-          <div style={{ fontSize: 10, color: t.textDim, marginTop: 2 }}>{monthLabel}</div>
+          <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.1em" }}>Target Tracker</div>
+          <div style={{ fontSize: 10, color: "var(--text-dim)", marginTop: 2 }}>{monthLabel}</div>
         </div>
         {/* Current streak badge */}
         <div style={{
@@ -107,7 +109,7 @@ export default function TargetTracker({ stats, settings, currencyMeta, theme }) 
           <div style={{ fontSize: 11, color: streakColor, fontWeight: 500, marginTop: 2 }}>
             {stats.currentStreak} {streakLabel}
           </div>
-          <div style={{ fontSize: 9, color: t.textDim }}>streak</div>
+          <div style={{ fontSize: 9, color: "var(--text-dim)" }}>streak</div>
         </div>
       </div>
 
@@ -148,15 +150,15 @@ export default function TargetTracker({ stats, settings, currencyMeta, theme }) 
       </div>
 
       {/* Month P&L summary */}
-      <div style={{ borderTop: `1px solid var(--border)`, paddingTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+      <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 8 }}>
         {[
           { label: "Bulan Ini P&L",  value: formatCurrency(stats.monthPnl, false, sym),  color: stats.monthPnl >= 0 ? "#00d4aa" : "#ef4444" },
-          { label: "Month Trades",   value: stats.monthTrades,                             color: t.text },
-          { label: "Month Win Rate", value: stats.monthTrades ? `${((stats.monthWins / stats.monthTrades) * 100).toFixed(0)}%` : "—", color: t.text },
+          { label: "Month Trades",   value: stats.monthTrades,                             color: "var(--text)" },
+          { label: "Month Win Rate", value: stats.monthTrades ? `${((stats.monthWins / stats.monthTrades) * 100).toFixed(0)}%` : "—", color: "var(--text)" },
         ].map(s => (
           <div key={s.label} style={{ textAlign: "center" }}>
             <div style={{ fontSize: 14, fontWeight: 500, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 9, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>{s.label}</div>
+            <div style={{ fontSize: 9, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.08em", marginTop: 2 }}>{s.label}</div>
           </div>
         ))}
       </div>

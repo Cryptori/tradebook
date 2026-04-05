@@ -35,7 +35,7 @@ export default function HeatmapChart({ trades, symbol = "$", theme }) {
 
   return (
     <div>
-      <div style={{ fontSize: 11, color: t.textDim, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>
+      <div style={{ fontSize: 11, color: "var(--text-dim)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>
         P&L Heatmap — Day × Session
       </div>
       <div style={{ overflowX: "auto" }}>
@@ -44,14 +44,14 @@ export default function HeatmapChart({ trades, symbol = "$", theme }) {
             <tr>
               <th style={{ width: 44, fontWeight: 400 }} />
               {SESSIONS.map(s => (
-                <th key={s} style={{ fontSize: 10, color: t.textDim, fontWeight: 400, textAlign: "center", paddingBottom: 6, whiteSpace: "nowrap" }}>{s}</th>
+                <th key={s} style={{ fontSize: 10, color: "var(--text-dim)", fontWeight: 400, textAlign: "center", paddingBottom: 6, whiteSpace: "nowrap" }}>{s}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {DAYS.map(day => (
               <tr key={day}>
-                <td style={{ fontSize: 11, color: t.textMuted, paddingRight: 8, whiteSpace: "nowrap" }}>{day}</td>
+                <td style={{ fontSize: 11, color: "var(--text-muted)", paddingRight: 8, whiteSpace: "nowrap" }}>{day}</td>
                 {SESSIONS.map(session => {
                   const cell = matrix[day][session];
                   return (
@@ -65,10 +65,10 @@ export default function HeatmapChart({ trades, symbol = "$", theme }) {
                             <div style={{ fontSize: 10, color: cell.pnl >= 0 ? "#00d4aa" : "#ef4444", fontWeight: 500 }}>
                               {formatCurrency(cell.pnl, true, symbol)}
                             </div>
-                            <div style={{ fontSize: 9, color: t.textDim }}>{cell.count}x</div>
+                            <div style={{ fontSize: 9, color: "var(--text-dim)" }}>{cell.count}x</div>
                           </>
                         ) : (
-                          <div style={{ fontSize: 10, color: t.textDim }}>—</div>
+                          <div style={{ fontSize: 10, color: "var(--text-dim)" }}>—</div>
                         )}
                       </div>
                     </td>

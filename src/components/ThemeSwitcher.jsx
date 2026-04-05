@@ -11,7 +11,7 @@ export function FloatingThemeSwitcher({ currentTheme, onSetTheme, theme: t }) {
     }}>
       <div style={{
         display: "flex", gap: 6, padding: "8px 10px",
-        background: t.bgCard, border: `1px solid ${t.border}`,
+        background: "var(--bg-card)", border: "1px solid var(--border)",
         borderRadius: 100, boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
         backdropFilter: "blur(12px)",
       }}>
@@ -45,7 +45,7 @@ export function ThemePicker({ currentTheme, onSetTheme, theme: t }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div style={{ fontSize: 9, color: t.accent, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 600 }}>Tema Aplikasi</div>
+      <div style={{ fontSize: 9, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 600 }}>Tema Aplikasi</div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
         {themes.map(thm => (
           <button
@@ -54,8 +54,8 @@ export function ThemePicker({ currentTheme, onSetTheme, theme: t }) {
             style={{
               display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
               padding: "14px 8px", borderRadius: 12, cursor: "pointer",
-              border: `2px solid ${currentTheme === thm.name ? thm.accent : t.border}`,
-              background: currentTheme === thm.name ? thm.accent + "12" : t.bgSubtle,
+              border: `2px solid ${currentTheme === thm.name ? thm.accent : "var(--border)"}`,
+              background: currentTheme === thm.name ? thm.accent + "12" : "var(--bg-subtle)",
               transition: "all 0.2s",
             }}
           >
@@ -67,7 +67,7 @@ export function ThemePicker({ currentTheme, onSetTheme, theme: t }) {
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 14 }}>{thm.emoji}</div>
-              <div style={{ fontSize: 10, color: currentTheme === thm.name ? thm.accent : t.textMuted, fontWeight: currentTheme === thm.name ? 600 : 400, marginTop: 2 }}>{thm.label}</div>
+              <div style={{ fontSize: 10, color: currentTheme === thm.name ? thm.accent : "var(--text-muted)", fontWeight: currentTheme === thm.name ? 600 : 400, marginTop: 2 }}>{thm.label}</div>
             </div>
             {currentTheme === thm.name && (
               <div style={{ fontSize: 9, color: thm.accent, fontWeight: 700 }}>✓ Aktif</div>

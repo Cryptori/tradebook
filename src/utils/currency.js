@@ -56,7 +56,7 @@ export function formatCurrencyAmount(amount, currencyCode = "USD", showSign = fa
  */
 export async function fetchExchangeRates() {
   try {
-    const res  = await fetch("https://api.frankfurter.app/latest?from=USD");
+    const res  = await fetch("https://open.er-api.com/v6/latest/USD");
     const data = await res.json();
     if (data.rates) {
       return { ...data.rates, USD: 1 };
